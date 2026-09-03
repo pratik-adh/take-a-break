@@ -2,8 +2,11 @@
 #
 # Builds "Take a Break.app" from source.
 #
-#   ./build.sh            build into "./dist/Take a Break.app"
-#   ./build.sh --install  build, then move it into /Applications and launch it
+#   ./build.sh              build into "./dist/Take a Break.app"
+#   ./build.sh --install    build, then move it into /Applications and launch it
+#   ./build.sh --universal  build a universal (arm64 + x86_64) binary, for releases
+#
+# The flags combine, in any order.
 #
 # Requirements: macOS 13+ and the Xcode Command Line Tools
 #               (run `xcode-select --install` once if `swift` is missing).
@@ -20,7 +23,14 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 cd "$ROOT"
 
 INSTALL=0
-[ "${1:-}" = "--install" ] && INSTALL=1
+UNIVERSAL=0
+for arg in "$@"; do
+  case "$arg" in
+    --install)   INSTALL=1 ;;
+    --universal) UNIVERSAL=1 ;;
+    *) echo "unknown option: $arg"; exit 2 ;;
+  esac
+done
 
 if ! command -v swift >/dev/null 2>&1; then
   echo "error: 'swift' not found. Install the Xcode Command Line Tools:"
@@ -28,10 +38,20 @@ if ! command -v swift >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "==> Compiling (release)…"
-swift build -c release
+# A universal build is what releases ship, so the app runs on both Apple
+# silicon and Intel; a plain build stays native-only because it is much faster
+# to iterate on.
+BUILD_FLAGS=(-c release)
+if [ "$UNIVERSAL" = "1" ]; then
+  BUILD_FLAGS+=(--arch arm64 --arch x86_64)
+  echo "==> Compiling (release, universal arm64 + x86_64)…"
+else
+  echo "==> Compiling (release)…"
+fi
 
-BIN_PATH="$(swift build -c release --show-bin-path)"
+swift build "${BUILD_FLAGS[@]}"
+
+BIN_PATH="$(swift build "${BUILD_FLAGS[@]}" --show-bin-path)"
 APP="dist/$APP_NAME.app"
 
 echo "==> Assembling $APP …"
