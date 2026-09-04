@@ -527,7 +527,7 @@ private struct StatsTab: View {
 
 private struct SupportTab: View {
     // TODO: replace with your real Buy Me a Coffee page before shipping.
-    private static let coffeeURL = URL(string: "https://www.buymeacoffee.com/pause")!
+    private static let coffeeURL = URL(string: "https://www.buymeacoffee.com/take-a-break")!
 
     var body: some View {
         Form {

@@ -177,6 +177,7 @@ build.sh                        compile → "Take a Break.app" (icon, ad-hoc sig
 Resources/
   Info.plist                    LSUIElement, bundle id com.takeabreak.mac
   icon_1024.png                 source art; build.sh turns it into AppIcon.icns
+  MakeIcon.swift                redraws icon_1024.png from code (CoreGraphics)
 Sources/TakeABreak/
   main.swift                    NSApplication bootstrap, accessory policy
   AppDelegate.swift             wires the model to the three controllers
