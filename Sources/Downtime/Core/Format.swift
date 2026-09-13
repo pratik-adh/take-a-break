@@ -68,6 +68,43 @@ enum Format {
         return f.string(from: date)
     }
 
+    /// "1.2 GB" / "340 MB" — for network usage totals.
+    static func bytes(_ count: Int) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .file
+        formatter.allowedUnits = [.useKB, .useMB, .useGB, .useTB]
+        return formatter.string(fromByteCount: Int64(max(0, count)))
+    }
+
+    /// "1.2M" / "340K" / "0B" — no space, for the network popover's ring.
+    static func speed(_ bytesPerSecond: Double) -> String {
+        let units = ["B", "K", "M", "G"]
+        var value = max(0, bytesPerSecond)
+        var index = 0
+        while value >= 1024 && index < units.count - 1 {
+            value /= 1024
+            index += 1
+        }
+        if index == 0 { return "\(Int(value))\(units[index])" }
+        return String(format: "%.1f%@", value, units[index])
+    }
+
+    /// Same units as `speed(_:)`, but always exactly 5 characters — a 4-wide
+    /// number field plus the unit letter — so the menu bar text never
+    /// resizes tick to tick. Without this, "0B" growing to "12.3M" shoves
+    /// every status item to its right sideways once a second.
+    static func speedFixedWidth(_ bytesPerSecond: Double) -> String {
+        let units = ["B", "K", "M", "G"]
+        var value = max(0, bytesPerSecond)
+        var index = 0
+        while value >= 1024 && index < units.count - 1 {
+            value /= 1024
+            index += 1
+        }
+        if index == 0 { return String(format: "%4.0f%@", value, units[index]) }
+        return String(format: "%4.1f%@", value, units[index])
+    }
+
     static func weekdayName(_ weekday: Int) -> String {
         let symbols = Calendar.current.shortWeekdaySymbols   // index 0 == Sunday
         let index = max(0, min(6, weekday - 1))
