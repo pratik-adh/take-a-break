@@ -379,9 +379,18 @@ nothing to point at.
 ### Clicking the network icon: its own popover
 
 Left-click opens a popover shaped like the break dashboard — header (icon,
-title, pause button, gear), a live hero showing current ↓/↑ speed as two
-rings, a speed test, a Wi-Fi usage list, today's totals, and a footer (gear,
-Quit Network Mode). Right-click gives the same options as a plain menu.
+title, pause button, gear), a live hero, a speed test, a Wi-Fi usage list,
+and a footer (gear, Quit Network Mode). Right-click gives the same options
+as a plain menu.
+
+**The hero shows both a rate and a total, deliberately.** Each ring's live
+↓/↑ speed answers "how fast right now"; today's actual usage total sits
+underneath each ring answering "how much so far" — download and upload
+tracked and shown as genuinely separate numbers throughout (verified: the
+counters are read from distinct kernel fields, `ifi_ibytes`/`ifi_obytes`,
+and kept apart end to end, so the two are never the same figure by
+coincidence of a bug). The speed test's own numbers are unrelated to this
+and unaffected by it.
 
 **While paused, the popover collapses to a single notice** ("Network
 tracking is paused" + a Resume Network Mode button) instead of a wall of
