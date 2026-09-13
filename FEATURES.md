@@ -383,14 +383,24 @@ title, pause button, gear), a live hero, a speed test, a Wi-Fi usage list,
 and a footer (gear, Quit Network Mode). Right-click gives the same options
 as a plain menu.
 
-**The hero shows both a rate and a total, deliberately.** Each ring's live
-↓/↑ speed answers "how fast right now"; today's actual usage total sits
-underneath each ring answering "how much so far" — download and upload
-tracked and shown as genuinely separate numbers throughout (verified: the
-counters are read from distinct kernel fields, `ifi_ibytes`/`ifi_obytes`,
-and kept apart end to end, so the two are never the same figure by
-coincidence of a bug). The speed test's own numbers are unrelated to this
-and unaffected by it.
+**The hero shows both a rate and a total, deliberately, and leads with the
+total.** Each ring's big number is today's actual usage by default — a live
+rate only means something the instant you're looking at it, a total still
+means something a minute later — with the live ↓/↑ speed underneath instead.
+A segmented control (**Today's Usage** / **Live Speed**) above the rings
+swaps which one is primary; nothing is hidden either way, just which number
+is large. Download and upload are tracked and shown as genuinely separate
+numbers throughout (verified: the counters are read from distinct kernel
+fields, `ifi_ibytes`/`ifi_obytes`, and kept apart end to end, so the two are
+never the same figure by coincidence of a bug). The speed test's own numbers
+are unrelated to this and unaffected by it.
+
+**The ring's fill means something different in each mode.** In Live Speed
+mode it's the same illustrative soft cap as before (5 MB/s = full — ordinary
+browsing sits mid-ring). In Today's Usage mode it fills toward a concrete MB
+target instead: your own daily data budget (Settings → Network → Daily data
+budget) if you've set one, since that's already the one number in this app
+meant to represent "a day's worth," or a plain 1 GB milestone if you haven't.
 
 **While paused, the popover collapses to a single notice** ("Network
 tracking is paused" + a Resume Network Mode button) instead of a wall of
