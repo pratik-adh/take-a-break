@@ -1,9 +1,11 @@
-# Take a Break — full feature reference
+# Downtime — full feature reference
 
-Take a Break is a macOS menu-bar app that's concerned about your health: it
+Downtime is a macOS menu-bar app that's concerned about your health: it
 looks after your eyes, your back and your hydration through a working day at the
-screen. This document covers every feature, every setting, every default, and
-the behaviour behind each one. For the overview and install instructions, see
+screen. It also knows how to stay out of your way — holding reminders during a
+meeting or a fullscreen app — and, optionally, tracks how much data you've used.
+This document covers every feature, every setting, every default, and the
+behaviour behind each one. For the overview and install instructions, see
 [README.md](README.md).
 
 - [Menu bar](#menu-bar)
@@ -14,12 +16,16 @@ the behaviour behind each one. For the overview and install instructions, see
 - [Presence: idle, lock and sleep](#presence-idle-lock-and-sleep)
 - [Work hours](#work-hours)
 - [Fullscreen apps](#fullscreen-apps)
+- [Calendar-aware pausing](#calendar-aware-pausing)
 - [Pausing and resuming](#pausing-and-resuming)
 - [Water tracking](#water-tracking)
 - [Stats and streaks](#stats-and-streaks)
+- [Network usage](#network-usage)
 - [Custom wording](#custom-wording)
 - [Sound](#sound)
 - [Open at login](#open-at-login)
+- [Shortcuts (App Intents)](#shortcuts-app-intents)
+- [Settings backup](#settings-backup)
 - [Appearance and design tokens](#appearance-and-design-tokens)
 - [Settings reference](#settings-reference)
 - [Keyboard shortcuts](#keyboard-shortcuts)
@@ -45,6 +51,9 @@ countdown to it:
 **Countdown format** — under an hour it reads `45m`; over an hour, `1h04`. Turn
 on seconds and it becomes `44:59` / `1:04:32`. Both are rendered in a
 monospaced-digit font so the width doesn't jitter as the numbers tick.
+
+**Network usage has its own, separate icon** — not part of this one. See
+[Network usage](#network-usage) below.
 
 **Hover tooltip** lists every enabled reminder and its remaining time at once,
 or the current pause reason.
@@ -132,6 +141,7 @@ every 20 minutes / 20 second break and switches it on.
 | **Gentle** | Small card in the top-right corner. Never steals focus, never covers your work. |
 | **Focused** *(default)* | Frosted dim over the whole screen with the card in the middle. Skippable. |
 | **Strict** | Same, but Okay and Esc are locked out until the timer reaches zero. |
+| **Notification** | No window at all — a native macOS notification with Done / Snooze / Skip actions. Asks for notification permission the first time you pick it. |
 
 The card shows: the reminder name, a countdown ring, the headline, the message
 (with your real screen time substituted in), the instruction, any "also due"
@@ -147,6 +157,11 @@ you out of a break you opted into.
 
 **When the timer hits zero** the card switches to "Break complete", optionally
 chimes, and by default closes itself.
+
+The **Notification** style has no window and no keyboard shortcuts — use the
+notification's own Done / Snooze / Skip buttons instead. Everything else
+(counting down, "also due" folding, stats) works exactly the same underneath;
+only how the break is announced changes.
 
 ---
 
@@ -224,6 +239,31 @@ turn it off.
 
 ---
 
+## Calendar-aware pausing
+
+Off by default. When on, reminders hold automatically while an event on your
+calendar is happening right now — no schedule to configure, it just checks the
+current moment.
+
+- Reads calendar events via **EventKit**, polling once every 30 seconds for
+  anything active right now (a 2-second window around "now"). It never reads
+  your calendar in bulk, never stores an event, and never sends anything
+  anywhere — the only thing kept is a live yes/no plus the current event's
+  title, shown in Settings so you can see why reminders are quiet.
+- **Ignore all-day events** is on by default, so a birthday or a holiday
+  doesn't hold your reminders for the whole day.
+- Cancelled events are ignored.
+- Turning this on is the moment Downtime actually asks macOS for Calendar
+  access — it's the one feature in the app that needs a system permission. If
+  you decline (or later revoke it in System Settings → Privacy & Security →
+  Calendars), Settings → Schedule explains that plainly instead of silently
+  doing nothing.
+- Like fullscreen detection and being away, this is a fact about the world
+  rather than something you chose — the Resume button doesn't appear for it;
+  it clears itself when the meeting ends.
+
+---
+
 ## Pausing and resuming
 
 From the dashboard header menu or the right-click menu:
@@ -232,10 +272,22 @@ From the dashboard header menu or the right-click menu:
 - Pause **until tomorrow** (resumes 5 a.m.)
 - Pause **until I turn it back on**
 
-The footer's Pause button is the simple version of the last one.
+The footer's **Quit Break Mode** button is the simple version of the last one
+— named that deliberately, alongside the network icon's own "Quit Network
+Mode," so it's clear each stops *that* feature only. Neither menu offers to
+quit the other one, and only this icon's menu has the true "Quit Downtime"
+that ends the app entirely.
 
 Pausing closes any break already on screen cleanly, so a reminder is never lost
 mid-break. A timed pause expires by itself.
+
+**While manually paused, the dashboard collapses** the reminder list, water
+tracker, actions and stats into a single "Reminders are paused" notice with
+its own Resume Break Mode button — the hero ring stays (it already shows the
+paused state clearly) but the rest has nothing fresh to show. This only
+happens for a real pause; being away, in a fullscreen app, in a meeting, or
+outside work hours are transient world-states, and the dashboard stays fully
+visible during those since it's still useful to glance at.
 
 **Honest affordances.** The app distinguishes holds you set from facts about the
 world. Manual pauses and the work-hours schedule are yours to lift, so Resume
@@ -256,14 +308,147 @@ Going over the goal shows a `+n` badge rather than hiding the overflow.
 ## Stats and streaks
 
 Recorded per day: **breaks taken**, **breaks skipped**, **snoozes**, **break
-seconds**, **screen seconds**, **glasses**.
+seconds**, **screen seconds**, **glasses**, plus (see below) **per-reminder
+breaks taken** and **network bytes up/down**.
 
 - **7-day bar chart** in the dashboard and in Settings → Stats.
-- **Streak** — consecutive days that met your daily break goal (1–30,
+- **Overall streak** — consecutive days that met your daily break goal (1–30,
   default 8). Today only counts once you've *hit* the goal, so the streak
   doesn't read as broken every morning before you've earned it.
+- **Per-reminder streaks** — Stand & Stretch, Drink Water and Rest Your Eyes
+  each keep their own streak against their own daily goal (Settings → General
+  → *Per-reminder goals*, 1–30 each, defaults 5 / 6 / 8). A day away from your
+  desk long enough to be credited as a break counts toward every enabled
+  reminder's streak, same as it does for the overall one.
+- **This week vs. last week** — Settings → Stats shows breaks taken and
+  compliance for the last 7 days against the 7 before that, so a good or bad
+  week has something to compare against besides a flat number.
 - History is kept for **120 days**, saved to disk every 30 seconds and on quit.
 - Settings → Stats → **Erase all history**, with a confirmation.
+
+---
+
+## Network usage
+
+Optional, **on by default**, and deliberately kept **separate from the break
+reminders** — its own icon, its own pause switch, its own settings — so the
+two features stay legible at a glance instead of blurring into one thing.
+
+**How it's read** — once a second, alongside the reminder tick, the app reads
+the same cumulative interface byte counters Activity Monitor's Network tab and
+tools like `nettop`/`netstat -ib` read (`sysctl(NET_RT_IFLIST2)`), across every
+interface except loopback. This needs **no permission prompt** and involves
+**no network requests of any kind** — it's a purely local read of counters the
+kernel already keeps. A negative delta (Wi-Fi toggled, VPN reconnected) is
+skipped rather than counted as a spike. (The one exception to "no network
+requests" anywhere in this feature is the on-demand speed test below, which
+only ever runs when you tap its button.)
+
+### Its own menu bar icon
+
+A second, independent status item — a network glyph, optionally with a
+**total-usage** readout next to it (Settings → Network → *Menu bar* → pick
+Today's / This week's / This month's usage). This is deliberately a total,
+not a live rate: a number that ticks every second is hard to read at a
+glance and stops meaning anything the moment you look away. Live up/down
+*speed* lives one click away instead — see the popover below. The icon and
+the break icon are rendered the same way — the glyph composed as a single
+attributed string with the icon inlined and baseline-corrected against the
+text, rather than `NSButton`'s separate image+title layout — so the two sit
+visually aligned rather than looking like two different conventions.
+Right-click the icon for today's totals, **Quit Network Mode** (or **Resume
+Network Mode**), and Settings.
+
+**Pausing is independent of the break reminders, and it's called "Quit
+Network Mode" on purpose.** Turning it off — from Settings, the icon's own
+right-click menu, or the popover's footer — stops tracking and makes the icon
+disappear from the menu bar entirely; the break reminder icon and its own
+"Quit Break Mode" are completely unaffected, and vice versa. Neither menu
+offers to quit the *other* feature, and only the break icon's menu has the
+true "Quit Downtime" that ends the app — quitting one feature was never
+supposed to take the other down with it. (The break icon itself never fully
+disappears on pause, even though the network one does — it's the app's only
+way back in with no Dock icon, so it always shows at least a paused glyph
+instead of vanishing.)
+
+### Clicking the network icon: its own popover
+
+Left-click opens a popover shaped like the break dashboard — header (icon,
+title, pause button, gear), a live hero showing current ↓/↑ speed as two
+rings, a speed test, a Wi-Fi usage list, today's totals, and a footer (gear,
+Quit Network Mode). Right-click gives the same options as a plain menu.
+
+**While paused, the popover collapses to a single notice** ("Network
+tracking is paused" + a Resume Network Mode button) instead of a wall of
+stale, dimmed sections — there's no live speed, no fresh usage, and nothing
+new for the Wi-Fi list to show while tracking is off, so showing all of that
+anyway would just be noise.
+
+### Speed test
+
+The passive tracking above measures *ambient* usage — whatever's actually
+moving right now, which sits near zero between page loads. It cannot tell you
+what your connection is *capable of*. For that, the popover has a **Test
+Speed** button (a speedometer icon) that runs a real speed test: latency
+(ping), download, and upload, each shown as its own stage rather than one
+long spinner, finishing in a row of three result chips (↓ Mbps, ↑ Mbps, ping
+ms) with a **Test Again** button styled like a real button, not a plain link.
+
+This is the **one place in the entire app that makes an actual network
+request** — everything else here is a local read, verified by checking the
+running app's actual open network connections with nothing clicked: none.
+It uses Cloudflare's public speed-test endpoints (`speed.cloudflare.com`, the
+same infrastructure behind their own public speed test page and various
+third-party tools): a small request for latency, a ~25 MB download, and a
+~10 MB upload, all discarded server-side, nothing personal attached beyond
+what any HTTPS request already carries. It never runs on its own — only when
+you tap the button — and a **Cancel** button is available mid-test.
+
+**If the Mac has no usable network path at all**, checked live via
+`NWPathMonitor` (a local, permission-free system read — not part of the
+speed test itself), the button is replaced with a plain "No network
+connection available" notice instead of a button that's just going to fail;
+the same check distinguishes a genuine outage from an ordinary failed test
+(server hiccup, timeout), which still gets the regular Retry button.
+
+### What you see (Settings → Network, top to bottom)
+
+1. **Network tracking** — the master on/off (same switch as pausing from the icon).
+2. **Menu bar** — icon on/off, which period's total to show (day/week/month), live preview.
+3. **Display** — show upload/download as separate rows or one combined figure,
+   applied consistently to every figure below.
+4. **Daily data budget** — see below.
+5. **Today**, **This week**, **This month** — each as separate ↓/↑ rows or one
+   combined total, per the Display setting above.
+6. **By Wi-Fi network** — opt-in usage breakdown by network name (see below).
+7. **All-time total** — everything still in history (up to 120 days), always last.
+
+**Daily data budget** — off by default. Pick a threshold (500 MB up to 20 GB)
+and crossing it sends **one** nudge notification for the day. This is
+explicitly a nudge, not an enforced limit: actually blocking or throttling
+traffic needs a Network Extension (its own Apple Developer entitlement and
+provisioning profile) or a root-privileged helper, neither of which fits an
+app that ships as a single unprivileged, ad-hoc-signed binary. If that's ever
+worth the added complexity and signing requirements, it would be a separate,
+bigger effort.
+
+**By Wi-Fi network** — off by default. Labels usage by the Wi-Fi network you
+were connected to at the time (wired connections and unreadable networks are
+grouped as "Other network," shown with a distinct cable icon rather than
+wifi bars it hasn't earned). The list is sorted largest-first, and whichever
+network you're on right now carries a green **"now"** badge — live, updated
+every tick, not just when the list happens to redraw. In the popover, every
+row (current or not — clicking behaves identically either way) opens
+Settings → Network for the full breakdown.
+
+Reading the *current* Wi-Fi name requires **Location Services
+authorization** — a macOS-wide restriction on SSID access since Catalina,
+because a network name can reveal where you are. Turning this on is the
+moment the app asks for that permission; declining (or revoking it later in
+System Settings → Privacy & Security → Location Services) shows a plain
+explanation in Settings rather than silently doing nothing. Nothing about
+this ever leaves your Mac — the name only labels your own local usage
+history.
 
 ---
 
@@ -298,12 +483,40 @@ Silent disables the chime and volume controls too.
 
 ## Open at login
 
-Settings → General → **Open Take a Break at login**.
+Settings → General → **Open Downtime at login**.
 
 Registers with `SMAppService`. If macOS refuses — which unsigned local builds
 sometimes do — it falls back to a LaunchAgent at
-`~/Library/LaunchAgents/com.takeabreak.mac.launcher.plist`. Either way the
+`~/Library/LaunchAgents/com.downtime.mac.launcher.plist`. Either way the
 toggle reports what actually happened rather than silently failing.
+
+---
+
+## Shortcuts (App Intents)
+
+Four actions are exposed to Shortcuts and Siri, built with **App Intents** —
+no separate extension, no entitlement, just Swift in the main app target:
+
+| Shortcut | Does |
+|---|---|
+| **Take a Break Now** | Starts whichever reminder is next up |
+| **Pause Reminders** | Pauses for a number of minutes (parameterized) |
+| **Resume Reminders** | Resumes reminders |
+| **Log a Glass of Water** | Adds one glass to today's count |
+
+Build a Shortcut around these the same way as any other app's actions — e.g.
+"When my Focus turns on, Pause Reminders for 60 minutes."
+
+---
+
+## Settings backup
+
+Settings → General → **Export Settings…** / **Import Settings…** saves your
+whole configuration (reminders, break style, schedule, calendar/network
+settings, per-reminder goals — everything except your stats history) to a
+JSON file and loads it back. Useful for moving to another Mac or keeping a
+known-good configuration on hand. Import uses the same forgiving decode as
+every other settings load, so a file from an older or newer build still works.
 
 ---
 
@@ -334,30 +547,41 @@ set.
 
 ## Settings reference
 
-Six tabs.
+Seven tabs.
 
 ### Reminders
 Per reminder: on/off, interval, break length, custom headline, custom message.
 Plus the 20-20-20 preset button.
 
 ### Break Screen
-Style (Gentle / Focused / Strict) · Dim other displays · Snooze length ·
-Snoozes per break · Close automatically when the timer ends · Show a wellbeing
-tip · Preview a break now.
+Style (Gentle / Focused / Strict / Notification) · Dim other displays ·
+Snooze length · Snoozes per break · Close automatically when the timer ends ·
+Show a wellbeing tip · Preview a break now.
 
 ### Schedule
 Only remind me during work hours · From/to times · Weekday picker · live
 "Right now" status · Hold the timer after · Count time away as a break after ·
-Don't interrupt fullscreen apps · current idle seconds · Resume now.
+Don't interrupt fullscreen apps · **Calendar: pause during meetings, ignore
+all-day events, access status** · current idle seconds · Resume now.
 
 ### General
 Open at login · Show the countdown in the menu bar · Include seconds ·
 Reminder sound, volume, Test · Chime when a break finishes · Breaks per day
-goal · Glasses per day goal · About · Restore all defaults.
+goal · Glasses per day goal · **per-reminder daily goals** ·
+**Export/Import Settings** · About · Restore all defaults.
 
 ### Stats
 Today's chips (taken / skipped / snoozes / glasses) · screen time · break time ·
-7-day chart · streak · breaks this week · Erase all history.
+7-day chart · overall streak · **this week vs. last week** ·
+**per-reminder streaks** · breaks this week · Erase all history.
+
+### Network
+Its own tab for its own icon and feature, kept separate from reminders:
+tracking on/off (doubles as pause/resume) · menu bar icon + which period's
+total it shows · combined-vs-separate display · daily data budget · today's /
+this week's / this month's totals · **speed test** (latency, download, upload)
+· by-Wi-Fi-network breakdown (opt-in, needs Location Services) · all-time
+total, last.
 
 ### Support
 Buy me a coffee · feedback note.
@@ -391,9 +615,14 @@ still works normally.
 
 | What | Where |
 |---|---|
-| Settings | user defaults, `com.takeabreak.mac`, key `takeabreak.settings.v1` |
-| History | `~/Library/Application Support/TakeABreak/stats.json` |
-| Login item fallback | `~/Library/LaunchAgents/com.takeabreak.mac.launcher.plist` |
+| Settings | user defaults, `com.downtime.mac`, key `downtime.settings.v1` |
+| History (incl. network totals) | `~/Library/Application Support/Downtime/stats.json` |
+| Login item fallback | `~/Library/LaunchAgents/com.downtime.mac.launcher.plist` |
+| Calendar events | never stored — checked live via EventKit, only a yes/no and the current event's title are kept in memory |
+| Notifications | delivered locally via `UNUserNotificationCenter`; nothing is sent to a server |
+| Wi-Fi network names (opt-in) | stored only as usage totals in `stats.json` above, keyed by network name — never the SSID list itself, never sent anywhere |
+| Speed test | not stored at all — the result lives in the popover until you close it or run another test |
 
-No network code, no analytics, no accounts, no update check. Nothing leaves your
-Mac.
+No analytics, no accounts, no update check. The **speed test is the sole
+exception** to "no outbound network requests" — and only while you're actively
+running it. Nothing else leaves your Mac.

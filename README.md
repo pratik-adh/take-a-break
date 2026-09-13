@@ -1,4 +1,4 @@
-# Take a Break
+# Downtime
 
 **A macOS app that's concerned about your health.**
 
@@ -17,7 +17,7 @@ click:       dashboard — rings, toggles, water tracker, streak
 right-click: break now · pause · settings · quit
 ```
 
-**No Dock icon. No account. No network code. Nothing leaves your Mac.**
+**No Dock icon. No account. No analytics or telemetry — nothing you do here ever leaves your Mac.**
 
 ---
 
@@ -44,13 +44,14 @@ clock — firing while you're in a meeting, or thirty seconds after you sat back
 down from lunch — or they're so easy to dismiss that you reflexively swat them
 away without ever taking the break.
 
-Take a Break tries to earn the interruption instead:
+Downtime tries to earn the interruption instead:
 
 - **It only counts time you were actually at the screen.** Step away and the
   timers hold. Stay away long enough and they reset and you get credit — so
   coming back from lunch doesn't mean an instant reminder.
 - **It knows when to stay quiet.** Optional work hours, optional fullscreen
-  detection, and a pause button with real durations.
+  detection, optional calendar-awareness (it holds during a meeting), and a
+  pause button with real durations.
 - **It tells you what to do, not just that time passed.** Each break names the
   action — stand and reach, drink a few mouthfuls, look 20 feet away — and the
   copy uses your real screen time, not a placeholder.
@@ -118,6 +119,43 @@ real.
 with a darker, more saturated set of brand hues for light mode so nothing reads
 as washed out on a white background.
 
+**Calendar-aware pausing** — optionally holds reminders while an event on your
+calendar is happening right now, so a meeting never gets interrupted. Off by
+default; asks for Calendar access only if you turn it on.
+
+**Notification break style** — a fourth break style that sends a native macOS
+notification with Done / Snooze / Skip actions instead of taking over the
+screen, for anyone who finds the overlay too heavy.
+
+**Shortcuts support** — "Take a Break Now," "Pause Reminders," "Resume
+Reminders," and "Log a Glass of Water" are all exposed as Shortcuts/Siri
+actions.
+
+**Settings backup** — export your settings to a file and import them again, to
+move your setup to another Mac or keep a copy.
+
+**Deeper stats** — a week-over-week trend (breaks and compliance vs. the
+previous 7 days) and a separate streak for each reminder, not just an overall
+one.
+
+**Network usage tracking** — optional, on by default, and deliberately kept as
+a *separate feature* from break reminders: its own menu bar icon, its own
+pause switch, its own settings tab. The menu bar shows a total (today / this
+week / this month, your choice) rather than a constantly-flickering live
+rate; click the icon for a popover with live up/down speed rings, a **Test
+Speed** button for a real download/upload/ping test, and a Wi-Fi-ranked usage
+breakdown. Today's / this week's / this month's / all-time upload and
+download totals, an optional breakdown by Wi-Fi network (needs Location
+access — see [Privacy](#privacy)), and a daily data budget that sends one
+nudge notification when you cross it. Downtime can't actually block or
+throttle your connection (that needs a much deeper system integration), so
+this is a nudge, not an enforced limit. **"Quit Network Mode"** — from
+Settings, the icon's own right-click menu, or the popover footer — stops
+tracking and makes its icon disappear entirely; the break reminder icon and
+its own separate "Quit Break Mode" are untouched either way. Quitting one
+feature never takes the other down with it, and only the break icon's menu
+has the real "Quit Downtime" that ends the app.
+
 📖 **[Full feature reference → FEATURES.md](FEATURES.md)** — every setting,
 every default, and the exact behaviour behind each one.
 
@@ -140,7 +178,7 @@ Or build without installing:
 
 ```sh
 ./build.sh
-open "dist/Take a Break.app"
+open "dist/Downtime.app"
 ```
 
 The first launch puts a cup icon in your menu bar and nothing in the Dock —
@@ -157,15 +195,40 @@ too; `build.sh` only adds the `.app` wrapper, the icon, and an ad-hoc signature.
 
 ## Privacy
 
-There is no network code in this app at all. No analytics, no accounts, no
-telemetry, no update check.
+Downtime makes no outbound network requests **except one, and only when you
+ask for it**: tapping "Test Speed" in the network popover. There is no way to
+measure real internet throughput without moving real bytes across the
+internet, so that one feature briefly downloads/uploads test data to
+Cloudflare's public speed-test endpoints (the same infrastructure behind
+speed.cloudflare.com) — nothing personal attached beyond what any ordinary
+HTTPS request carries, and nothing runs unless you tap the button. Everything
+else — analytics, accounts, telemetry, update checks, background requests —
+stays exactly as absent as before, and everything it reads or stores stays on
+your Mac.
 
-- Settings live in your user defaults under `com.takeabreak.mac`.
-- History lives in `~/Library/Application Support/TakeABreak/stats.json`.
+- Settings live in your user defaults under `com.downtime.mac`.
+- History (including network usage totals) lives in
+  `~/Library/Application Support/Downtime/stats.json`.
 - Settings → Stats has an **Erase all history** button.
 
-It needs **no special permissions** — idle detection uses
-`CGEventSource.secondsSinceLastEventType`, which requires no Accessibility grant.
+**Permissions:**
+
+- Idle detection uses `CGEventSource.secondsSinceLastEventType`, which needs
+  **no Accessibility grant**.
+- Network usage tracking reads the same local interface byte counters Activity
+  Monitor does (`sysctl`) — **no permission prompt, no data ever sent anywhere.**
+- Calendar-aware pausing asks for a system permission (Calendar access), and
+  only if you turn it on in Settings → Schedule. Events are only ever checked
+  locally to see if one is happening right now — never read in bulk, stored,
+  or sent anywhere.
+- Breaking down network usage by Wi-Fi network (Settings → Network, off by
+  default) asks for **Location Services** access — the only way macOS lets any
+  app read the current Wi-Fi name, since Catalina, because a network name can
+  reveal where you are. It's used only to label your own local usage history;
+  nothing about it is ever stored beyond a per-network byte total, or sent
+  anywhere.
+- The Notification break style asks for the standard notification permission
+  the first time you pick it.
 
 ---
 
@@ -173,46 +236,60 @@ It needs **no special permissions** — idle detection uses
 
 ```
 Package.swift
-build.sh                        compile → "Take a Break.app" (icon, ad-hoc signature)
+build.sh                        compile → "Downtime.app" (icon, ad-hoc signature)
 Resources/
-  Info.plist                    LSUIElement, bundle id com.takeabreak.mac
+  Info.plist                    LSUIElement, bundle id com.downtime.mac
   icon_1024.png                 source art; build.sh turns it into AppIcon.icns
   MakeIcon.swift                redraws icon_1024.png from code (CoreGraphics)
-Sources/TakeABreak/
+Sources/Downtime/
   main.swift                    NSApplication bootstrap, accessory policy
-  AppDelegate.swift             wires the model to the three controllers
+  AppDelegate.swift             wires the model to the four controllers
   Models/
     ReminderKind.swift          the three reminders: copy, colours, tips
     Settings.swift              preferences, presets, forgiving decode
-    Stats.swift                 daily history, streaks, JSON store
+    Stats.swift                 daily history, streaks, per-network JSON store
   Core/
     AppModel.swift              the engine: tick loop, breaks, snooze, pause
     SystemMonitor.swift         input idle time, screen lock/sleep, fullscreen
+    CalendarMonitor.swift       EventKit: is a calendar event happening now?
+    NetworkMonitor.swift        sysctl interface byte counters (up/down)
+    WiFiMonitor.swift           CoreWLAN + CoreLocation: current Wi-Fi name
+    NetworkReachability.swift   NWPathMonitor: is there a network path at all?
+    SpeedTestService.swift      the one place this app makes a network request
+    NotificationManager.swift   UNUserNotificationCenter for the Notification break style
+    AppShortcuts.swift          App Intents for Shortcuts/Siri
     DesignTokens.swift          appearance-aware colour tokens
-    Format.swift                durations, countdowns, message placeholders
+    Format.swift                durations, countdowns, bytes, message placeholders
     SoundPlayer.swift           system sounds
     LaunchAtLogin.swift         SMAppService + LaunchAgent fallback
   UI/
-    StatusItemController.swift  menu bar icon, countdown, popover, menu
+    StatusItemController.swift  break icon: countdown, popover, menu
+    NetworkStatusItemController.swift  the separate network icon, its own menu
+    MenuBarComposer.swift       shared icon+text composition for both status items
     BreakOverlayController.swift break windows per display, keyboard handling
     SettingsWindowController.swift
     Views/
-      PopoverView.swift         the dashboard
+      PopoverView.swift         the break dashboard
+      NetworkPopoverView.swift  the network dashboard — speed rings, speed test, Wi-Fi list
       BreakView.swift           the break card
-      SettingsView.swift        six tabs
+      SettingsView.swift        seven tabs
       Components.swift          rings, chips, bars, water dots
 ```
 
 The whole app is one `AppModel` (an `ObservableObject`) driven by a one-second
-timer, plus three thin AppKit controllers that render it. **No third-party
-dependencies.**
+timer, plus four thin AppKit controllers that render it — including two
+independent status items, so the break and network features can each show up
+(or disappear) in the menu bar on their own. **No third-party dependencies** —
+the new features above are all built on system frameworks (EventKit,
+UserNotifications, AppIntents, CoreWLAN/CoreLocation, and the same BSD network
+counters `nettop` reads), never an external package.
 
 ---
 
 ## Troubleshooting
 
 **No icon in the menu bar.** The bar was probably full — quit an item or widen
-it. There's no Dock icon by design, so check it's running: `pgrep -x TakeABreak`.
+it. There's no Dock icon by design, so check it's running: `pgrep -x Downtime`.
 
 **Reminders never fire.** Open the dashboard and look for a pause reason
 ("Outside your work hours", "You're away — timer on hold"). If "Don't interrupt
@@ -225,6 +302,15 @@ actually happened.
 **Build warnings about main-actor isolation.** Expected. The package pins the
 Swift 5 language mode; the warnings are AppKit's pre-concurrency annotations and
 don't affect the build.
+
+**Calendar-aware pausing says access is off.** Grant it in
+System Settings → Privacy & Security → Calendars, then toggle the setting back
+on — Downtime only re-asks when you flip the switch.
+
+**Notification break style shows nothing.** Check System Settings →
+Notifications → Downtime. Notifications also need the app to be properly
+bundled and code-signed (which `build.sh` already does); running the raw
+binary outside the `.app` won't work.
 
 ---
 
