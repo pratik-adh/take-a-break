@@ -85,7 +85,7 @@ fi
 if command -v codesign >/dev/null 2>&1; then
   echo "==> Ad-hoc signing…"
   codesign --force --sign - --identifier "$BUNDLE_ID" "$APP" >/dev/null 2>&1 || \
-    echo "    (signing skipped — the app still runs)"
+    echo "    (signing skipped - the app still runs)"
 fi
 
 echo ""

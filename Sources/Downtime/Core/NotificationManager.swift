@@ -1,6 +1,6 @@
 import UserNotifications
 
-/// Wraps `UNUserNotificationCenter` for the "Notification" break style — a
+/// Wraps `UNUserNotificationCenter` for the "Notification" break style - a
 /// system notification with Snooze/Done/Skip actions instead of a window.
 final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
@@ -21,7 +21,7 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     }
 
     /// Only asked for the first time the person actually picks the
-    /// Notification break style — no point prompting anyone who never uses it.
+    /// Notification break style - no point prompting anyone who never uses it.
     func requestAuthorizationIfNeeded() {
         center.getNotificationSettings { [weak self] settings in
             guard settings.authorizationStatus == .notDetermined else { return }

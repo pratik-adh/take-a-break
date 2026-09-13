@@ -31,7 +31,7 @@
 	<key>NSSupportsSuddenTermination</key>
 	<false/>
 	<key>NSHumanReadableCopyright</key>
-	<string>Downtime — a gentle screen-break reminder for macOS.</string>
+	<string>Downtime - a gentle screen-break reminder for macOS.</string>
 	<key>NSCalendarsUsageDescription</key>
 	<string>Downtime can pause reminders while a calendar event is happening now.</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>

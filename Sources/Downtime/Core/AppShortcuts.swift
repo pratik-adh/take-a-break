@@ -1,7 +1,7 @@
 import AppIntents
 
-/// A static bridge so App Intents — instantiated fresh by the system, not by
-/// us — can reach the one `AppModel` the app actually runs.
+/// A static bridge so App Intents - instantiated fresh by the system, not by
+/// us - can reach the one `AppModel` the app actually runs.
 enum IntentBridge {
     static weak var model: AppModel?
 }

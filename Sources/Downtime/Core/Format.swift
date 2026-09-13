@@ -2,7 +2,7 @@ import Foundation
 
 enum Format {
 
-    /// "1h 05m" / "23m" / "45s" — for labels and prose.
+    /// "1h 05m" / "23m" / "45s" - for labels and prose.
     static func duration(_ seconds: TimeInterval) -> String {
         let total = max(0, Int(seconds.rounded()))
         let h = total / 3600
@@ -14,7 +14,7 @@ enum Format {
         return "\(s)s"
     }
 
-    /// "1 hour 5 minutes" — for the sentence on the break screen.
+    /// "1 hour 5 minutes" - for the sentence on the break screen.
     static func spelledDuration(_ seconds: TimeInterval) -> String {
         let total = max(0, Int(seconds.rounded()))
         let h = total / 3600
@@ -28,7 +28,7 @@ enum Format {
         return unit(max(total, 1), "second")
     }
 
-    /// "12:34" / "1:02:33" — for countdowns.
+    /// "12:34" / "1:02:33" - for countdowns.
     static func clock(_ seconds: TimeInterval) -> String {
         let total = max(0, Int(seconds.rounded()))
         let h = total / 3600
@@ -68,7 +68,7 @@ enum Format {
         return f.string(from: date)
     }
 
-    /// "1.2 GB" / "340 MB" — for network usage totals.
+    /// "1.2 GB" / "340 MB" - for network usage totals.
     static func bytes(_ count: Int) -> String {
         let formatter = ByteCountFormatter()
         formatter.countStyle = .file
@@ -76,7 +76,7 @@ enum Format {
         return formatter.string(fromByteCount: Int64(max(0, count)))
     }
 
-    /// "1.2M" / "340K" / "0B" — no space, for the network popover's ring.
+    /// "1.2M" / "340K" / "0B" - no space, for the network popover's ring.
     static func speed(_ bytesPerSecond: Double) -> String {
         let units = ["B", "K", "M", "G"]
         var value = max(0, bytesPerSecond)
@@ -89,8 +89,8 @@ enum Format {
         return String(format: "%.1f%@", value, units[index])
     }
 
-    /// Same units as `speed(_:)`, but always exactly 5 characters — a 4-wide
-    /// number field plus the unit letter — so the menu bar text never
+    /// Same units as `speed(_:)`, but always exactly 5 characters - a 4-wide
+    /// number field plus the unit letter - so the menu bar text never
     /// resizes tick to tick. Without this, "0B" growing to "12.3M" shoves
     /// every status item to its right sideways once a second.
     static func speedFixedWidth(_ bytesPerSecond: Double) -> String {

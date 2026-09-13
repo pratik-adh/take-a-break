@@ -109,19 +109,19 @@ struct Settings: Codable, Equatable {
 
     var networkTrackingEnabled: Bool
     /// Daily budget in MB before a one-time nudge notification fires. 0 = off.
-    /// This is a nudge, not an enforced limit — actually blocking traffic
+    /// This is a nudge, not an enforced limit - actually blocking traffic
     /// needs a Network Extension entitlement this app doesn't have.
     var dailyDataLimitMB: Int
     var showNetworkSpeedInMenuBar: Bool
     /// Whether the menu bar/tooltip speed readout includes each direction.
     /// Which period the menu bar icon's total-usage readout shows. Live
     /// up/down *speed* lives in the popover instead (opened by clicking the
-    /// icon) — the always-visible menu bar text shows a total, not a rate,
+    /// icon) - the always-visible menu bar text shows a total, not a rate,
     /// so it stays meaningful at a glance rather than flickering every tick.
     var menuBarUsagePeriod: NetworkMenuBarPeriod
     /// Network tab: totals as two rows (↓ / ↑) instead of one combined figure.
     var showUploadDownloadSeparately: Bool
-    /// Breaks down usage by Wi-Fi network name. Off by default — reading the
+    /// Breaks down usage by Wi-Fi network name. Off by default - reading the
     /// current SSID needs Location Services, a real macOS permission prompt.
     var perNetworkUsageEnabled: Bool
 

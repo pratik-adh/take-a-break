@@ -40,10 +40,10 @@ enum PauseReason: Equatable {
             if let until { return "Paused until \(Format.timeOfDayFrom(date: until))" }
             return "Paused"
         case .outsideSchedule: return "Outside your work hours"
-        case .away:            return "You're away — timer on hold"
-        case .fullscreen:      return "Fullscreen app — not interrupting"
+        case .away:            return "You're away - timer on hold"
+        case .fullscreen:      return "Fullscreen app - not interrupting"
         case .inMeeting(let title):
-            if let title, !title.isEmpty { return "In a meeting — \(title)" }
+            if let title, !title.isEmpty { return "In a meeting - \(title)" }
             return "In a meeting"
         }
     }
@@ -92,13 +92,13 @@ final class AppModel: ObservableObject {
     @Published var isInMeeting = false
     @Published var meetingTitle: String?
     @Published var calendarAccessDenied = false
-    /// Bytes/sec, refreshed every tick — drives the optional menu bar readout.
+    /// Bytes/sec, refreshed every tick - drives the optional menu bar readout.
     @Published var downloadSpeedBps: Double = 0
     @Published var uploadSpeedBps: Double = 0
     @Published var perNetworkLocationDenied = false
     @Published var perNetworkUsageTotals: [(name: String, received: Int, sent: Int)] = []
     @Published var allTimeNetworkTotal: (received: Int, sent: Int) = (0, 0)
-    /// The network currently attributed for usage — kept live every tick
+    /// The network currently attributed for usage - kept live every tick
     /// (not just when bytes moved) so the "connected now" marker in the
     /// usage list never lags behind an actual network change.
     @Published var currentNetworkLabel: String?
@@ -114,7 +114,7 @@ final class AppModel: ObservableObject {
 
     /// Set by the app delegate so views can open the Settings window.
     var onOpenSettings: (() -> Void)?
-    /// Read once by the Settings window on appear, then cleared — lets a
+    /// Read once by the Settings window on appear, then cleared - lets a
     /// caller (e.g. the network popover's gear button) jump straight to a
     /// specific tab instead of whichever one was left open last.
     @Published var pendingSettingsTab: Int?
@@ -230,7 +230,7 @@ final class AppModel: ObservableObject {
         now = Date()
         idleSeconds = SystemMonitor.idleSeconds()
         // Network usage keeps flowing whether or not screen breaks are being
-        // tracked, so this runs unconditionally — not behind any of the
+        // tracked, so this runs unconditionally - not behind any of the
         // pause/away/schedule early-returns below.
         updateNetworkUsage()
 
@@ -264,7 +264,7 @@ final class AppModel: ObservableObject {
         // so the menu bar never reports a stale reason.
         if settings.respectFullscreen { _ = isFullscreenNow() } else { fullscreenActive = false }
 
-        // Nothing is credited or counted while paused or off the clock — and the
+        // Nothing is credited or counted while paused or off the clock - and the
         // away bookkeeping is re-armed, so the next real absence still counts.
         if isPausedIndefinitely || pausedUntil != nil {
             creditedThisAwayPeriod = false
@@ -351,7 +351,7 @@ final class AppModel: ObservableObject {
         let deltaReceived = totals.received - previous.received
         let deltaSent = totals.sent - previous.sent
         // A negative delta means an interface reset (Wi-Fi toggled, VPN
-        // reconnected) — skip rather than let usage go backwards.
+        // reconnected) - skip rather than let usage go backwards.
         guard deltaReceived >= 0, deltaSent >= 0 else {
             downloadSpeedBps = 0
             uploadSpeedBps = 0
@@ -394,7 +394,7 @@ final class AppModel: ObservableObject {
 
         NotificationManager.shared.post(
             title: "Data budget reached",
-            body: "You've used \(Format.bytes(today.bytesReceived + today.bytesSent)) today — your daily budget is \(Format.bytes(settings.dailyDataLimitMB * 1_000_000))."
+            body: "You've used \(Format.bytes(today.bytesReceived + today.bytesSent)) today - your daily budget is \(Format.bytes(settings.dailyDataLimitMB * 1_000_000))."
         )
     }
 
@@ -454,7 +454,7 @@ final class AppModel: ObservableObject {
     ///
     /// When several are due at once we pick the one with the *longest* break,
     /// because a long break also serves the short ones (they ride along as
-    /// "also due") — one card instead of three in a row.
+    /// "also due") - one card instead of three in a row.
     func mostOverdueReminder(requireDue: Bool) -> ReminderKind? {
         let candidates = settings.reminders.filter { $0.isEnabled && $0.interval > 0 }
         guard !candidates.isEmpty else { return nil }
@@ -562,7 +562,7 @@ final class AppModel: ObservableObject {
 
     private func finish(_ session: BreakSession, completed: Bool) {
         let spent = Int(session.elapsedInBreak.rounded())
-        // Kinds this break actually served, for the per-kind streaks — the
+        // Kinds this break actually served, for the per-kind streaks - the
         // primary kind plus any "also due" ones long enough to be covered.
         var servedKinds: [ReminderKind] = completed ? [session.kind] : []
 
@@ -628,7 +628,7 @@ final class AppModel: ObservableObject {
         scheduleOverride = false
         let cal = Calendar.current
         let tomorrow = cal.date(byAdding: .day, value: 1, to: Date()) ?? Date().addingTimeInterval(86400)
-        // Anchor to the start of tomorrow — `bySettingHour` searches forward,
+        // Anchor to the start of tomorrow - `bySettingHour` searches forward,
         // which would otherwise land on the day after.
         pausedUntil = cal.date(bySettingHour: 5, minute: 0, second: 0,
                                of: cal.startOfDay(for: tomorrow))
@@ -657,7 +657,7 @@ final class AppModel: ObservableObject {
 
     /// Whether "Resume reminders" has anything to lift. Being away or in a
     /// fullscreen app are facts about the world rather than policies the person
-    /// set, and they clear themselves — offering a button for those is a lie.
+    /// set, and they clear themselves - offering a button for those is a lie.
     var canResume: Bool {
         if isPausedIndefinitely || pausedUntil != nil { return true }
         if settings.scheduleEnabled && !scheduleOverride && !isWithinSchedule { return true }
@@ -679,7 +679,7 @@ final class AppModel: ObservableObject {
     var isRunning: Bool { pauseReason == nil }
 
     /// A deliberate pause, as opposed to a transient world-state hold (away,
-    /// fullscreen, a meeting, outside work hours) — those clear themselves on
+    /// fullscreen, a meeting, outside work hours) - those clear themselves on
     /// their own, so they don't count as "you paused this."
     var isManuallyPaused: Bool { isPausedIndefinitely || pausedUntil != nil }
 
@@ -711,7 +711,7 @@ final class AppModel: ObservableObject {
         return minuteOfDay < end && settings.workdays.contains(yesterday)
     }
 
-    // MARK: - Fullscreen (throttled — the window list isn't free)
+    // MARK: - Fullscreen (throttled - the window list isn't free)
 
     private func isFullscreenNow() -> Bool {
         if now.timeIntervalSince(lastFullscreenCheck) >= 5 {

@@ -194,7 +194,7 @@ struct BreakView: View {
                 .padding(.top, 22)
 
             Text(isStrictHold(session)
-                 ? "Strict mode — the card stays until the break is done."
+                 ? "Strict mode - the card stays until the break is done."
                  : "return  Okay   ·   S  snooze   ·   esc  dismiss")
                 .font(.system(size: 10))
                 .foregroundStyle(.tertiary)
@@ -288,7 +288,7 @@ struct BreakView: View {
 
     private func primaryTitle(_ session: BreakSession) -> String {
         if session.isFinished { return "Okay" }
-        if session.kind == .water { return "Done — log a glass" }
+        if session.kind == .water { return "Done - log a glass" }
         return "I'm done"
     }
 }

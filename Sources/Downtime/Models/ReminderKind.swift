@@ -91,7 +91,7 @@ enum ReminderKind: String, Codable, CaseIterable, Identifiable, Hashable {
     var instruction: String? {
         switch self {
         case .stand: return "Stand, straighten your back, and reach for the ceiling."
-        case .water: return "Drink at least a few mouthfuls — not just a sip."
+        case .water: return "Drink at least a few mouthfuls - not just a sip."
         case .eyes:  return "Look at something about 20 feet (6 m) away for 20 seconds."
         }
     }
@@ -102,14 +102,14 @@ enum ReminderKind: String, Codable, CaseIterable, Identifiable, Hashable {
             return [
                 "Roll your shoulders backwards ten times, slowly.",
                 "Stand and tuck your chin to your chest to release your neck.",
-                "Walk to the window and back — momentum beats stretching.",
+                "Walk to the window and back - momentum beats stretching.",
                 "Open your chest: clasp your hands behind your back and lift.",
                 "Do five slow calf raises while you wait for the kettle."
             ]
         case .water:
             return [
                 "Cold water wakes you up more than another coffee.",
-                "Keep the glass in sight — you drink what you can see.",
+                "Keep the glass in sight - you drink what you can see.",
                 "Thirst usually shows up as tiredness first.",
                 "A pinch of salt or lemon makes water easier to finish.",
                 "Fill the glass now, even if you drink it in five minutes."
@@ -117,7 +117,7 @@ enum ReminderKind: String, Codable, CaseIterable, Identifiable, Hashable {
         case .eyes:
             return [
                 "20-20-20: every 20 minutes, look 20 feet away for 20 seconds.",
-                "Blink hard ten times — screens cut your blink rate in half.",
+                "Blink hard ten times - screens cut your blink rate in half.",
                 "Cup your palms over closed eyes and let them rest in the dark.",
                 "Trace a slow figure-eight with your gaze to loosen the muscles.",
                 "Dry eyes? Lower your screen slightly below eye level."

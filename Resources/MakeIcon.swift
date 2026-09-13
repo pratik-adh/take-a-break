@@ -13,7 +13,7 @@ let center = CGPoint(x: side / 2, y: side / 2)
 
 // MARK: - Shapes
 
-/// A superellipse — |x/a|^n + |y/a|^n = 1 — which is what macOS's "continuous
+/// A superellipse - |x/a|^n + |y/a|^n = 1 - which is what macOS's "continuous
 /// corner" app icon shape actually is. A plain rounded rect (circular corners)
 /// reads subtly wrong next to every other icon in the Dock.
 func squircle(center c: CGPoint, side s: CGFloat, exponent n: CGFloat = 6.2) -> CGPath {
@@ -74,7 +74,7 @@ let body = squircle(center: center, side: bodySide)
 // The artwork is drawn on its own transparent canvas first, then stamped into
 // the final one with a shadow. Casting the shadow off a black fill *under* a
 // clipped gradient instead leaves a dark antialiased fringe all the way round
-// the shape — it reads as a drawn-on outline at every size.
+// the shape - it reads as a drawn-on outline at every size.
 let artwork = newContext()
 
 artwork.saveGState()

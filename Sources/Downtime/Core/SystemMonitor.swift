@@ -29,7 +29,7 @@ enum SystemMonitor {
         return smallest == .greatestFiniteMagnitude ? 0 : smallest
     }
 
-    /// True when some other app owns a window the exact size of a display —
+    /// True when some other app owns a window the exact size of a display -
     /// a good-enough signal for "presenting or watching something fullscreen".
     /// Heuristic by nature, which is why it's off by default in Settings.
     static func isSomeAppFullscreen() -> Bool {

@@ -25,8 +25,8 @@ struct PopoverView: View {
     }
 
     /// The dashboard stays useful to glance at during a transient world-state
-    /// hold (away, fullscreen, a meeting, outside work hours) — those clear
-    /// themselves — but a real, deliberate pause has nothing fresh to show
+    /// hold (away, fullscreen, a meeting, outside work hours) - those clear
+    /// themselves - but a real, deliberate pause has nothing fresh to show
     /// underneath it.
     private var manuallyPaused: Bool { model.isManuallyPaused }
 
@@ -48,7 +48,7 @@ struct PopoverView: View {
         .padding(14)
         .frame(width: 332)
         // The system's own popover chrome reads as a dim gray sheet in Light
-        // Mode rather than a clean light surface — draw an explicit,
+        // Mode rather than a clean light surface - draw an explicit,
         // appearance-tuned background instead of leaning on that default.
         .background(Tokens.popoverBackground)
     }
@@ -277,7 +277,7 @@ struct PopoverView: View {
             // 20 minutes", "until tomorrow") stay in the header menu.
             //
             // While manually paused, `pausedNotice` above already has its own
-            // prominent Resume Break Mode button — repeating the same action
+            // prominent Resume Break Mode button - repeating the same action
             // here too was just clutter, so this slot only appears otherwise
             // (including during an away/fullscreen/schedule hold, where it's
             // still the only way to lift one that can be lifted).
@@ -290,7 +290,7 @@ struct PopoverView: View {
                 }
                 .buttonStyle(.borderless)
                 .disabled(!model.isRunning && !model.canResume)
-                .help(model.isRunning ? "Quit break mode — stops reminders, leaves network tracking untouched" : "Resume Break Mode")
+                .help(model.isRunning ? "Quit break mode - stops reminders, leaves network tracking untouched" : "Resume Break Mode")
             }
 
             Button {

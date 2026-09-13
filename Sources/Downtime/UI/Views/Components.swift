@@ -189,7 +189,7 @@ struct ReminderRowView: View {
             Spacer(minLength: 6)
 
             if isEnabled {
-                Text(isPaused ? "—" : Format.duration(remaining))
+                Text(isPaused ? "-" : Format.duration(remaining))
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
                     .foregroundStyle(isPaused ? Color.secondary : kind.tint)
                     .monospacedDigit()

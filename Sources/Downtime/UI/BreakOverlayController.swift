@@ -87,7 +87,7 @@ final class BreakOverlayController {
         dismiss(keepingState: true)
 
         let style = model.settings.breakStyle
-        // The notification style has no on-screen window at all — the break
+        // The notification style has no on-screen window at all - the break
         // is announced through NotificationManager instead, from AppModel.begin().
         guard style != .notification else { return }
         let screens = NSScreen.screens

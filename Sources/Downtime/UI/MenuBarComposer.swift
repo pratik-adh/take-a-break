@@ -2,7 +2,7 @@ import AppKit
 
 /// Builds a status item button's title as a single attributed string with
 /// the icon inlined as a text attachment, rather than relying on
-/// `NSButton`'s separate image+title layout — that combination doesn't
+/// `NSButton`'s separate image+title layout - that combination doesn't
 /// reliably vertically center the two against each other at menu bar sizes,
 /// which becomes obvious once two status items sit side by side.
 enum MenuBarComposer {

@@ -1,8 +1,8 @@
 import AppKit
 import SwiftUI
 
-/// A color that resolves differently depending on which appearance — light or
-/// dark — is currently drawing, instead of relying on one value's opacity to
+/// A color that resolves differently depending on which appearance - light or
+/// dark - is currently drawing, instead of relying on one value's opacity to
 /// read the same against opposite backgrounds (it won't: the same translucent
 /// white that reads as a soft highlight on a dark window reads as almost
 /// nothing on a white one).
@@ -13,26 +13,26 @@ func adaptiveColor(light: NSColor, dark: NSColor) -> Color {
 }
 
 /// Shared surface colors for the popover and settings chrome. Tuned
-/// separately per appearance rather than as one opacity over `.primary` —
+/// separately per appearance rather than as one opacity over `.primary` -
 /// dark mode already read fine as a faint highlight on a near-black window;
 /// light mode needs a visibly darker, more solid-looking fill to read as a
 /// card at all against white.
 enum Tokens {
-    /// Row and card fills — reminder rows, stat chips, the tip banner.
+    /// Row and card fills - reminder rows, stat chips, the tip banner.
     static let cardBackground = adaptiveColor(
         light: NSColor(white: 0.0, alpha: 0.08),
         dark: NSColor(white: 1.0, alpha: 0.05)
     )
 
     /// Thin borders and inactive pills that need to read as a shape, not a
-    /// tint — the schedule day toggles, the break card's edge.
+    /// tint - the schedule day toggles, the break card's edge.
     static let cardBorder = adaptiveColor(
         light: NSColor(white: 0.0, alpha: 0.14),
         dark: NSColor(white: 1.0, alpha: 0.12)
     )
 
     /// The popover's own backing. Drawn explicitly rather than left to
-    /// whatever the system's default popover chrome happens to render —
+    /// whatever the system's default popover chrome happens to render -
     /// which read as a dim, slightly gray sheet rather than a clean light
     /// surface once the system was in Light Mode.
     static let popoverBackground = adaptiveColor(

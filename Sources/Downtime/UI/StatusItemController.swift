@@ -18,7 +18,7 @@ final class StatusItemController: NSObject {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         content = NSHostingController(rootView: PopoverView(model: model))
         // Without this the hosting controller reports a preferred size of zero,
-        // the popover falls back to its own default, and the card gets clipped —
+        // the popover falls back to its own default, and the card gets clipped -
         // you see only its bottom half.
         content.sizingOptions = [.preferredContentSize]
         super.init()
@@ -35,7 +35,7 @@ final class StatusItemController: NSObject {
 
             // The button's own width tracks its content (a countdown collapses
             // to a bare icon on pause, and back on resume), which slides its
-            // *window* sideways as the menu bar repacks around it — often in
+            // *window* sideways as the menu bar repacks around it - often in
             // two separate waves, an immediate resize and then a follow-up
             // reposition a beat later. Neither is a change to the button's own
             // subview frame (that stays put; the window moves under it), so
@@ -85,7 +85,7 @@ final class StatusItemController: NSObject {
         // A `SymbolConfiguration` re-renders the glyph at this size with its
         // own correct metrics; forcing `.size` directly just scales whatever
         // was rendered at the default size, which left the icon slightly
-        // off-center — most visible once a second status item sat next to it.
+        // off-center - most visible once a second status item sat next to it.
         let config = NSImage.SymbolConfiguration(pointSize: 13, weight: .medium)
         let icon = (NSImage(systemSymbolName: symbolName, accessibilityDescription: "Downtime")
             ?? NSImage(systemSymbolName: "clock", accessibilityDescription: "Downtime"))?
@@ -108,7 +108,7 @@ final class StatusItemController: NSObject {
     }
 
     /// `NSPopover.show(relativeTo:of:)` only positions the popover the first
-    /// time — calling it again while already shown is a no-op, confirmed by
+    /// time - calling it again while already shown is a no-op, confirmed by
     /// tracking the popover's window frame through a pause/resume cycle: it
     /// never moved even as the button visibly resized underneath it. So when
     /// the button's width changes out from under an open popover, slide the
@@ -128,15 +128,15 @@ final class StatusItemController: NSObject {
     private var tooltip: String {
         var base: String
         if let session = model.activeBreak {
-            base = "\(session.kind.title) — \(Format.clock(session.remaining)) left"
+            base = "\(session.kind.title) - \(Format.clock(session.remaining)) left"
         } else if let reason = model.pauseReason {
-            base = "Downtime — \(reason.label)"
+            base = "Downtime - \(reason.label)"
         } else {
             let lines = model.settings.reminders
                 .filter { $0.isEnabled }
                 .map { "\($0.kind.title): \(Format.duration(model.timeUntil($0.kind)))" }
             base = lines.isEmpty
-                ? "Downtime — all reminders are off"
+                ? "Downtime - all reminders are off"
                 : (["Next up"] + lines).joined(separator: "\n")
         }
         return base
@@ -167,8 +167,8 @@ final class StatusItemController: NSObject {
         popover.contentViewController?.view.window?.makeKey()
     }
 
-    /// The card's height moves with its contents — a pause banner appears, a
-    /// "skipped" line shows up — so measure it on each open rather than trusting
+    /// The card's height moves with its contents - a pause banner appears, a
+    /// "skipped" line shows up - so measure it on each open rather than trusting
     /// whatever size the popover was left at.
     private func sizeToFitContent() {
         content.view.layoutSubtreeIfNeeded()

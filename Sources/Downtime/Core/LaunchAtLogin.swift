@@ -5,7 +5,7 @@ import AppKit
 /// "Open at Login" with a fallback.
 ///
 /// `SMAppService` is the modern API, but it needs a properly bundled (ideally
-/// signed) app. When it refuses — which happens with ad-hoc local builds — we
+/// signed) app. When it refuses - which happens with ad-hoc local builds - we
 /// fall back to writing a plain LaunchAgent, which always works.
 enum LaunchAtLogin {
 
