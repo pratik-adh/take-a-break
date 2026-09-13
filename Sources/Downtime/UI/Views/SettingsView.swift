@@ -37,7 +37,7 @@ struct SettingsView: View {
                 .tag(6)
         }
         // The Settings window is created once and reused (shown/hidden, never
-        // rebuilt), so `.onAppear` only ever fires the first time — this has
+        // rebuilt), so `.onAppear` only ever fires the first time - this has
         // to react to the value changing instead, on every subsequent open too.
         .onAppear { applyPendingTab() }
         .onChange(of: model.pendingSettingsTab) { _ in applyPendingTab() }
@@ -366,7 +366,7 @@ private struct ScheduleTab: View {
                 if model.settings.scheduleEnabled {
                     Text(model.isWithinSchedule
                          ? "Right now: inside your work hours."
-                         : "Right now: outside your work hours — reminders are on hold.")
+                         : "Right now: outside your work hours - reminders are on hold.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 } else {
@@ -414,7 +414,7 @@ private struct ScheduleTab: View {
                             .font(.caption)
                             .foregroundStyle(.orange)
                     } else if model.isInMeeting {
-                        Text("Right now: in a meeting\(model.meetingTitle.map { " — \($0)" } ?? "") — reminders on hold.")
+                        Text("Right now: in a meeting\(model.meetingTitle.map { " - \($0)" } ?? "") - reminders on hold.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     } else {
@@ -429,7 +429,7 @@ private struct ScheduleTab: View {
                 HStack(spacing: 6) {
                     Image(systemName: model.pauseReason?.symbolName ?? "checkmark.circle.fill")
                         .foregroundStyle(model.isRunning ? ReminderKind.stand.tint : Color.secondary)
-                    Text(model.pauseReason?.label ?? "Counting — reminders active")
+                    Text(model.pauseReason?.label ?? "Counting - reminders active")
                         .font(.system(size: 12))
                     Spacer()
                     Text("idle \(Int(model.idleSeconds))s")
@@ -468,7 +468,7 @@ private struct GeneralTab: View {
                 Toggle("Include seconds in the countdown",
                        isOn: settingsBinding(model, \.showSecondsInMenuBar))
                     .disabled(!model.settings.showCountdownInMenuBar)
-                Text("Network usage has its own icon and settings — see the Network tab.")
+                Text("Network usage has its own icon and settings - see the Network tab.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -581,11 +581,11 @@ private struct NetworkTab: View {
 
     var body: some View {
         Form {
-            // MARK: Controls — what to track, and how to show it
+            // MARK: Controls - what to track, and how to show it
 
             Section("Network tracking") {
                 if model.settings.networkTrackingEnabled {
-                    Text("Tracking is on. Its own icon in the menu bar shows this at a glance — right-click it to pause.")
+                    Text("Tracking is on. Its own icon in the menu bar shows this at a glance - right-click it to pause.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 } else {
@@ -598,7 +598,7 @@ private struct NetworkTab: View {
                     }
                 }
                 Toggle("Track network usage", isOn: settingsBinding(model, \.networkTrackingEnabled))
-                Text("Reads the same interface counters Activity Monitor's network tab does — a break-reminder feature kept fully separate from reminders themselves. Everything stays on this Mac.")
+                Text("Reads the same interface counters Activity Monitor's network tab does - a break-reminder feature kept fully separate from reminders themselves. Everything stays on this Mac.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -617,7 +617,7 @@ private struct NetworkTab: View {
                     let preview = model.settings.showUploadDownloadSeparately
                         ? "↓\(Format.bytes(total.received)) ↑\(Format.bytes(total.sent))"
                         : Format.bytes(total.received + total.sent)
-                    Text("\(preview) — right now. Live up/down speed is one click away, in the popover.")
+                    Text("\(preview) - right now. Live up/down speed is one click away, in the popover.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
@@ -643,12 +643,12 @@ private struct NetworkTab: View {
                     }
                 }
                 .disabled(!model.settings.networkTrackingEnabled)
-                Text("This is a nudge, not a block — Downtime can't actually limit your internet without a much deeper (and riskier) system integration. Crossing the budget sends one notification for the day.")
+                Text("This is a nudge, not a block - Downtime can't actually limit your internet without a much deeper (and riskier) system integration. Crossing the budget sends one notification for the day.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
-            // MARK: Usage — day, week, month, by network, then the grand total
+            // MARK: Usage - day, week, month, by network, then the grand total
 
             Section("Today") {
                 let today = model.todayStat
@@ -725,7 +725,7 @@ private struct NetworkTab: View {
                             .font(.caption)
                             .foregroundStyle(.orange)
                     } else if model.perNetworkUsageTotals.isEmpty {
-                        Text("No network history yet — check back after using the connection for a bit.")
+                        Text("No network history yet - check back after using the connection for a bit.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     } else {
@@ -917,7 +917,8 @@ private struct StatsTab: View {
 // MARK: - Support
 
 private struct SupportTab: View {
-    private static let coffeeURL = URL(string: "https://www.buymeacoffee.com/take.a.break")!
+    private static let coffeeURL = URL(string: "https://www.buymeacoffee.com/downtime.app")!
+    private static let githubURL = URL(string: "https://github.com/pratik-adh/take-a-break")!
 
     var body: some View {
         Form {
@@ -942,12 +943,50 @@ private struct SupportTab: View {
                 .controlSize(.large)
             }
 
+            Section("What a coffee actually goes toward") {
+                supportRow(symbol: "lock.shield.fill",
+                           text: "No ads, no telemetry, no accounts - anywhere in this app. That's a deliberate, ongoing cost, not a one-time decision.")
+                supportRow(symbol: "hammer.fill",
+                           text: "Every feature here - calendar-aware pausing, network tracking, the speed test - is built and maintained by a person.")
+                supportRow(symbol: "arrow.triangle.2.circlepath",
+                           text: "Keeping up with new macOS releases, fixing bugs, and shipping the things people actually ask for.")
+                supportRow(symbol: "checkmark.seal.fill",
+                           text: "It doesn't unlock anything. Downtime is fully-featured whether or not you ever buy a coffee - this is just how you say thanks.")
+            }
+
             Section("Feedback") {
-                Text("Found a bug, or have an idea for a reminder? Let me know — every note gets read.")
+                Text("Found a bug, or have an idea for a reminder? Let me know - every note gets read.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+
+            Section {
+                HStack(spacing: 8) {
+                    Image(systemName: "chevron.left.forwardslash.chevron.right")
+                        .foregroundStyle(.secondary)
+                    Text("Downtime is open source and MIT-licensed - issues and pull requests are welcome.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button("View on GitHub") {
+                        NSWorkspace.shared.open(Self.githubURL)
+                    }
+                    .font(.caption)
+                }
+            }
         }
         .formStyle(.grouped)
+    }
+
+    private func supportRow(symbol: String, text: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: symbol)
+                .font(.system(size: 12))
+                .foregroundStyle(ReminderKind.stand.tint)
+                .frame(width: 16)
+            Text(text)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
     }
 }
