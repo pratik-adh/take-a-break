@@ -734,7 +734,7 @@ private struct NetworkTab: View {
                             let isCurrent = entry.name == model.currentNetworkLabel
                             HStack(spacing: 6) {
                                 Image(systemName: entry.name == "Other network" ? "cable.connector" : "wifi")
-                                    .padding(.horizontal, entry.name == "Other network" ? 6 : 0)
+                                    .padding(.horizontal, entry.name == "Other network" ? 4 : 0)
                                     .font(.caption2)
                                     .foregroundStyle(isCurrent ? Color.green : Color.secondary)
                                 Text(entry.name)
@@ -752,7 +752,7 @@ private struct NetworkTab: View {
                             }
                         }
                     }
-                    Text("Reading the current Wi-Fi name needs Location Services — a macOS restriction on SSID access, not something this app can bypass. Wired connections and unreadable networks are grouped as \"Other network.\" Nothing is ever sent anywhere; the name only labels your own local history.")
+                    Text("Reading the current Wi-Fi name needs Location Services - a macOS restriction on SSID access, not something this app can bypass. Wired connections and unreadable networks are grouped as \"Other network.\" Nothing is ever sent anywhere; the name only labels your own local history.")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
