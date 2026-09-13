@@ -24,13 +24,11 @@ struct PopoverView: View {
         }
     }
 
-    /// A deliberate pause, as opposed to a transient world-state hold (away,
-    /// fullscreen, a meeting, outside work hours) — those clear themselves
-    /// and the dashboard stays useful to glance at during them, but a real
-    /// pause has nothing fresh to show underneath it.
-    private var manuallyPaused: Bool {
-        model.isPausedIndefinitely || model.pausedUntil != nil
-    }
+    /// The dashboard stays useful to glance at during a transient world-state
+    /// hold (away, fullscreen, a meeting, outside work hours) — those clear
+    /// themselves — but a real, deliberate pause has nothing fresh to show
+    /// underneath it.
+    private var manuallyPaused: Bool { model.isManuallyPaused }
 
     var body: some View {
         VStack(spacing: 12) {

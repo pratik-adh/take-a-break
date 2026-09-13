@@ -678,6 +678,11 @@ final class AppModel: ObservableObject {
 
     var isRunning: Bool { pauseReason == nil }
 
+    /// A deliberate pause, as opposed to a transient world-state hold (away,
+    /// fullscreen, a meeting, outside work hours) — those clear themselves on
+    /// their own, so they don't count as "you paused this."
+    var isManuallyPaused: Bool { isPausedIndefinitely || pausedUntil != nil }
+
     // MARK: - Schedule
 
     var isWithinSchedule: Bool {
