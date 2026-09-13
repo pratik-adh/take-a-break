@@ -2,14 +2,14 @@
 import PackageDescription
 
 let package = Package(
-    name: "TakeABreak",
+    name: "Downtime",
     platforms: [
         .macOS(.v13)
     ],
     targets: [
         .executableTarget(
-            name: "TakeABreak",
-            path: "Sources/TakeABreak"
+            name: "Downtime",
+            path: "Sources/Downtime"
         )
     ],
     // Pinned so a newer toolchain defaulting to Swift 6 strict concurrency

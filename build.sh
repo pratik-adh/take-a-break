@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# Builds "Take a Break.app" from source.
+# Builds "Downtime.app" from source.
 #
-#   ./build.sh              build into "./dist/Take a Break.app"
+#   ./build.sh              build into "./dist/Downtime.app"
 #   ./build.sh --install    build, then move it into /Applications and launch it
 #   ./build.sh --universal  build a universal (arm64 + x86_64) binary, for releases
 #
@@ -14,11 +14,10 @@
 set -euo pipefail
 
 # PRODUCT is the compiled binary (and the SwiftPM target); APP_NAME is what
-# people see in Finder and the Dock. They differ because the display name has
-# spaces and CFBundleExecutable cannot.
-PRODUCT="TakeABreak"
-APP_NAME="Take a Break"
-BUNDLE_ID="com.takeabreak.mac"
+# people see in Finder and the Dock.
+PRODUCT="Downtime"
+APP_NAME="Downtime"
+BUNDLE_ID="com.downtime.mac"
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 cd "$ROOT"
 

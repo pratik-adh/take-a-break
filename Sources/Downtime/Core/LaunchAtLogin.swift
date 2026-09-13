@@ -9,7 +9,7 @@ import AppKit
 /// fall back to writing a plain LaunchAgent, which always works.
 enum LaunchAtLogin {
 
-    private static let label = "com.takeabreak.mac.launcher"
+    private static let label = "com.downtime.mac.launcher"
 
     private static var agentURL: URL {
         let home = FileManager.default.homeDirectoryForCurrentUser
@@ -56,7 +56,7 @@ enum LaunchAtLogin {
 
     private static func writeAgent() -> String? {
         let executable = Bundle.main.executablePath ?? ProcessInfo.processInfo.arguments.first
-        guard let executable else { return "Couldn't work out where Take a Break is installed." }
+        guard let executable else { return "Couldn't work out where Downtime is installed." }
 
         let plist: [String: Any] = [
             "Label": label,

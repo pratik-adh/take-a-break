@@ -3,19 +3,19 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleName</key>
-	<string>Take a Break</string>
+	<string>Downtime</string>
 	<key>CFBundleDisplayName</key>
-	<string>Take a Break</string>
+	<string>Downtime</string>
 	<key>CFBundleExecutable</key>
-	<string>TakeABreak</string>
+	<string>Downtime</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.takeabreak.mac</string>
+	<string>com.downtime.mac</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.1</string>
+	<string>1.1.0</string>
 	<key>CFBundleVersion</key>
-	<string>2</string>
+	<string>3</string>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>CFBundleInfoDictionaryVersion</key>
@@ -31,6 +31,12 @@
 	<key>NSSupportsSuddenTermination</key>
 	<false/>
 	<key>NSHumanReadableCopyright</key>
-	<string>Take a Break — a gentle screen-break reminder for macOS.</string>
+	<string>Downtime — a gentle screen-break reminder for macOS.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Downtime can pause reminders while a calendar event is happening now.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Downtime can pause reminders while a calendar event is happening now.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>Downtime can label your network usage history by Wi-Fi network name, if you turn that on in Settings → Network. This is read locally and never leaves your Mac.</string>
 </dict>
 </plist>
