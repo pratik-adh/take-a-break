@@ -361,15 +361,20 @@ Network Mode**), and Settings.
 
 **Pausing is independent of the break reminders, and it's called "Quit
 Network Mode" on purpose.** Turning it off — from Settings, the icon's own
-right-click menu, or the popover's footer — stops tracking and makes the icon
-disappear from the menu bar entirely; the break reminder icon and its own
-"Quit Break Mode" are completely unaffected, and vice versa. Neither menu
-offers to quit the *other* feature, and only the break icon's menu has the
-true "Quit Downtime" that ends the app — quitting one feature was never
-supposed to take the other down with it. (The break icon itself never fully
-disappears on pause, even though the network one does — it's the app's only
-way back in with no Dock icon, so it always shows at least a paused glyph
-instead of vanishing.)
+right-click menu, or the popover's footer — stops tracking; the break
+reminder icon and its own "Quit Break Mode" are completely unaffected, and
+vice versa. Neither menu offers to quit the *other* feature, and only the
+break icon's menu has the true "Quit Downtime" that ends the app.
+
+**The paused network icon shows a pause glyph rather than vanishing** — the
+same convention the break icon already uses — so it (and any popover open at
+the time) stays anchored to something real instead of disappearing out from
+under it. The one exception: if **both** features happen to be paused at
+once, the network icon steps aside and disappears, since the break icon is
+already showing a pause glyph of its own — two side by side would just be a
+redundant second copy of the same signal. If a popover was open when that
+happened, it closes automatically rather than being left floating with
+nothing to point at.
 
 ### Clicking the network icon: its own popover
 
@@ -439,7 +444,10 @@ wifi bars it hasn't earned). The list is sorted largest-first, and whichever
 network you're on right now carries a green **"now"** badge — live, updated
 every tick, not just when the list happens to redraw. In the popover, every
 row (current or not — clicking behaves identically either way) opens
-Settings → Network for the full breakdown.
+**macOS's own Wi-Fi settings** — not this app's — the same pane Control
+Center's own "Wi-Fi Settings…" link opens, in case you actually want to do
+something about the network in question (forget it, check its details, etc.)
+rather than just read a total.
 
 Reading the *current* Wi-Fi name requires **Location Services
 authorization** — a macOS-wide restriction on SSID access since Catalina,
