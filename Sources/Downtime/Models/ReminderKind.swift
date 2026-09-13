@@ -13,7 +13,7 @@ private func adaptiveTint(light: (Double, Double, Double), dark: (Double, Double
     )
 }
 
-/// The three things Take a Break nags you about.
+/// The three things Downtime nags you about.
 enum ReminderKind: String, Codable, CaseIterable, Identifiable, Hashable {
     case stand
     case water
@@ -133,30 +133,35 @@ enum BreakStyle: String, Codable, CaseIterable, Identifiable {
     case focused
     /// Dims the screen and won't let you dismiss until the break is over.
     case strict
+    /// A system notification instead of any on-screen window.
+    case notification
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .gentle:  return "Gentle"
-        case .focused: return "Focused"
-        case .strict:  return "Strict"
+        case .gentle:       return "Gentle"
+        case .focused:      return "Focused"
+        case .strict:       return "Strict"
+        case .notification: return "Notification"
         }
     }
 
     var detail: String {
         switch self {
-        case .gentle:  return "A small card in the corner of the screen. Never takes focus."
-        case .focused: return "Dims the whole screen with a card in the middle. Skippable."
-        case .strict:  return "Dims the screen and keeps the card up until the break is finished."
+        case .gentle:       return "A small card in the corner of the screen. Never takes focus."
+        case .focused:      return "Dims the whole screen with a card in the middle. Skippable."
+        case .strict:       return "Dims the screen and keeps the card up until the break is finished."
+        case .notification: return "Sends a macOS notification instead of taking over the screen. Snooze or mark it done right from the notification."
         }
     }
 
     var symbolName: String {
         switch self {
-        case .gentle:  return "bell.badge"
-        case .focused: return "rectangle.inset.filled"
-        case .strict:  return "lock.fill"
+        case .gentle:       return "bell.badge"
+        case .focused:      return "rectangle.inset.filled"
+        case .strict:       return "lock.fill"
+        case .notification: return "bell.badge.fill"
         }
     }
 }

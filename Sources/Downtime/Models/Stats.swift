@@ -8,6 +8,18 @@ struct DayStat: Codable, Equatable, Identifiable {
     var breakSeconds: Int = 0
     var screenSeconds: Int = 0
     var glasses: Int = 0
+    /// Breaks actually taken, keyed by `ReminderKind.rawValue` — backs each
+    /// reminder's own streak, separate from the combined `breaksTaken` above.
+    var perKindTaken: [String: Int] = [:]
+    /// Cumulative bytes in/out across all network interfaces (except
+    /// loopback) for this day.
+    var bytesReceived: Int = 0
+    var bytesSent: Int = 0
+    /// Same totals, broken down by Wi-Fi network name (opt-in — see
+    /// `Settings.perNetworkUsageEnabled`). Non-Wi-Fi traffic is grouped under
+    /// a single label rather than going unrecorded.
+    var perNetworkReceived: [String: Int] = [:]
+    var perNetworkSent: [String: Int] = [:]
 
     var id: String { day }
 
@@ -18,8 +30,19 @@ struct DayStat: Codable, Equatable, Identifiable {
     }
 }
 
+/// This week vs. the seven days before it — a coarse trend, not a chart.
+struct WeekSummary: Equatable {
+    var breaksThisWeek: Int
+    var breaksLastWeek: Int
+    var complianceThisWeek: Double
+    var complianceLastWeek: Double
+
+    static let zero = WeekSummary(breaksThisWeek: 0, breaksLastWeek: 0,
+                                   complianceThisWeek: 0, complianceLastWeek: 0)
+}
+
 /// Rolling history of the last few months, stored as JSON in
-/// ~/Library/Application Support/TakeABreak/stats.json
+/// ~/Library/Application Support/Downtime/stats.json
 final class StatsStore {
 
     private(set) var days: [String: DayStat]
@@ -40,7 +63,7 @@ final class StatsStore {
         let base = FileManager.default
             .urls(for: .applicationSupportDirectory, in: .userDomainMask)
             .first ?? URL(fileURLWithPath: NSHomeDirectory() + "/Library/Application Support")
-        let dir = base.appendingPathComponent("TakeABreak", isDirectory: true)
+        let dir = base.appendingPathComponent("Downtime", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         fileURL = dir.appendingPathComponent("stats.json")
 
@@ -124,5 +147,73 @@ final class StatsStore {
 
     func total(_ path: (DayStat) -> Int, lastDays: Int, from now: Date = Date()) -> Int {
         recent(lastDays, from: now).reduce(0) { $0 + path($1) }
+    }
+
+    /// Network usage across every retained day (up to 120), not just a recent window.
+    func allTimeNetworkTotal() -> (received: Int, sent: Int) {
+        days.values.reduce(into: (received: 0, sent: 0)) { totals, day in
+            totals.received += day.bytesReceived
+            totals.sent += day.bytesSent
+        }
+    }
+
+    /// Per-Wi-Fi-network totals across every retained day, largest first.
+    func perNetworkTotals() -> [(name: String, received: Int, sent: Int)] {
+        var totals: [String: (received: Int, sent: Int)] = [:]
+        for day in days.values {
+            for (name, bytes) in day.perNetworkReceived {
+                totals[name, default: (0, 0)].received += bytes
+            }
+            for (name, bytes) in day.perNetworkSent {
+                totals[name, default: (0, 0)].sent += bytes
+            }
+        }
+        return totals
+            .map { (name: $0.key, received: $0.value.received, sent: $0.value.sent) }
+            .sorted { ($0.received + $0.sent) > ($1.received + $1.sent) }
+    }
+
+    /// Consecutive days a single reminder kind met its own goal. Mirrors
+    /// `streak(goal:from:)` but reads `perKindTaken` instead of the combined total.
+    func streak(kind: ReminderKind, goal: Int, from now: Date = Date()) -> Int {
+        let cal = Calendar.current
+        var streak = 0
+        var cursor = now
+
+        func taken(on date: Date) -> Int {
+            days[StatsStore.key(for: date)]?.perKindTaken[kind.rawValue] ?? 0
+        }
+
+        if taken(on: now) >= goal { streak = 1 }
+        guard let yesterday = cal.date(byAdding: .day, value: -1, to: cursor) else { return streak }
+        cursor = yesterday
+
+        while taken(on: cursor) >= goal {
+            streak += 1
+            guard let previous = cal.date(byAdding: .day, value: -1, to: cursor) else { break }
+            cursor = previous
+        }
+        return streak
+    }
+
+    func weekSummary(from now: Date = Date()) -> WeekSummary {
+        let thisWeek = recent(7, from: now)
+        let priorAnchor = Calendar.current.date(byAdding: .day, value: -7, to: now) ?? now
+        let lastWeek = recent(7, from: priorAnchor)
+
+        func compliance(_ week: [DayStat]) -> Double {
+            let taken = week.reduce(0) { $0 + $1.breaksTaken }
+            let skipped = week.reduce(0) { $0 + $1.breaksSkipped }
+            let total = taken + skipped
+            guard total > 0 else { return 0 }
+            return Double(taken) / Double(total)
+        }
+
+        return WeekSummary(
+            breaksThisWeek: thisWeek.reduce(0) { $0 + $1.breaksTaken },
+            breaksLastWeek: lastWeek.reduce(0) { $0 + $1.breaksTaken },
+            complianceThisWeek: compliance(thisWeek),
+            complianceLastWeek: compliance(lastWeek)
+        )
     }
 }

@@ -1,5 +1,22 @@
 import Foundation
 
+/// Which period the network menu bar icon's total-usage text shows.
+enum NetworkMenuBarPeriod: String, Codable, CaseIterable, Identifiable {
+    case day
+    case week
+    case month
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .day: return "Today's usage"
+        case .week: return "This week's usage"
+        case .month: return "This month's usage"
+        }
+    }
+}
+
 struct ReminderSetting: Codable, Equatable, Identifiable {
     var kind: ReminderKind
     var isEnabled: Bool
@@ -83,6 +100,31 @@ struct Settings: Codable, Equatable {
     var awayResetsTimerMinutes: Int  // being away this long counts as a break
     var respectFullscreen: Bool      // don't interrupt fullscreen apps
 
+    // MARK: Calendar
+
+    var calendarAwareEnabled: Bool   // hold reminders while a calendar event is happening now
+    var calendarSkipAllDayEvents: Bool
+
+    // MARK: Network
+
+    var networkTrackingEnabled: Bool
+    /// Daily budget in MB before a one-time nudge notification fires. 0 = off.
+    /// This is a nudge, not an enforced limit — actually blocking traffic
+    /// needs a Network Extension entitlement this app doesn't have.
+    var dailyDataLimitMB: Int
+    var showNetworkSpeedInMenuBar: Bool
+    /// Whether the menu bar/tooltip speed readout includes each direction.
+    /// Which period the menu bar icon's total-usage readout shows. Live
+    /// up/down *speed* lives in the popover instead (opened by clicking the
+    /// icon) — the always-visible menu bar text shows a total, not a rate,
+    /// so it stays meaningful at a glance rather than flickering every tick.
+    var menuBarUsagePeriod: NetworkMenuBarPeriod
+    /// Network tab: totals as two rows (↓ / ↑) instead of one combined figure.
+    var showUploadDownloadSeparately: Bool
+    /// Breaks down usage by Wi-Fi network name. Off by default — reading the
+    /// current SSID needs Location Services, a real macOS permission prompt.
+    var perNetworkUsageEnabled: Bool
+
     // MARK: Schedule
 
     var scheduleEnabled: Bool
@@ -94,6 +136,9 @@ struct Settings: Codable, Equatable {
 
     var dailyBreakGoal: Int
     var waterGlassGoal: Int
+    /// Per-reminder daily goal, keyed by `ReminderKind.rawValue`, that backs
+    /// each reminder's own streak (separate from the overall `dailyBreakGoal`).
+    var perKindGoal: [String: Int]
 
     // MARK: Login
 
@@ -136,12 +181,25 @@ struct Settings: Codable, Equatable {
             idlePauseSeconds: 90,
             awayResetsTimerMinutes: 5,
             respectFullscreen: false,
+            calendarAwareEnabled: false,
+            calendarSkipAllDayEvents: true,
+            networkTrackingEnabled: true,
+            dailyDataLimitMB: 0,
+            showNetworkSpeedInMenuBar: false,
+            menuBarUsagePeriod: .day,
+            showUploadDownloadSeparately: true,
+            perNetworkUsageEnabled: false,
             scheduleEnabled: false,
             workdays: [2, 3, 4, 5, 6],
             startMinuteOfDay: 9 * 60,
             endMinuteOfDay: 18 * 60,
             dailyBreakGoal: 8,
             waterGlassGoal: 8,
+            perKindGoal: [
+                ReminderKind.stand.rawValue: 5,
+                ReminderKind.water.rawValue: 6,
+                ReminderKind.eyes.rawValue: 8
+            ],
             launchAtLogin: false
         )
     }
@@ -154,6 +212,10 @@ struct Settings: Codable, Equatable {
 
     func index(of kind: ReminderKind) -> Int? {
         reminders.firstIndex(where: { $0.kind == kind })
+    }
+
+    func goal(for kind: ReminderKind) -> Int {
+        perKindGoal[kind.rawValue] ?? 5
     }
 
     var enabledReminders: [ReminderSetting] {
@@ -173,6 +235,8 @@ struct Settings: Codable, Equatable {
     static let idleChoices: [Int] = [30, 60, 90, 180, 300]
     static let awayChoices: [Int] = [2, 3, 5, 10, 15, 30]
     static let maxSnoozeChoices: [Int] = [0, 1, 2, 3, 5]
+    /// MB. 0 = no budget.
+    static let dataLimitChoices: [Int] = [0, 500, 1000, 2000, 5000, 10000, 20000]
 
     /// Repairs a decoded value: makes sure all three reminders exist, in order,
     /// and that every number is one the interface can actually display.
@@ -195,6 +259,12 @@ struct Settings: Codable, Equatable {
         endMinuteOfDay = min(max(endMinuteOfDay, 0), 24 * 60 - 1)
         dailyBreakGoal = min(max(dailyBreakGoal, 1), 60)
         waterGlassGoal = min(max(waterGlassGoal, 1), 20)
+        var goals: [String: Int] = [:]
+        for kind in ReminderKind.allCases {
+            goals[kind.rawValue] = min(max(perKindGoal[kind.rawValue] ?? 5, 1), 30)
+        }
+        perKindGoal = goals
+        dailyDataLimitMB = Settings.snap(dailyDataLimitMB, to: Settings.dataLimitChoices)
         let days = Set(workdays.filter { (1...7).contains($0) })
         workdays = days.isEmpty ? [1, 2, 3, 4, 5, 6, 7] : days.sorted()
     }
@@ -202,7 +272,7 @@ struct Settings: Codable, Equatable {
     // MARK: - Forgiving decoding
     //
     // Every key falls back to the default, so a settings file written by an
-    // older or newer build of Take a Break still loads instead of being thrown away.
+    // older or newer build of Downtime still loads instead of being thrown away.
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -222,12 +292,21 @@ struct Settings: Codable, Equatable {
         idlePauseSeconds = (try? c.decode(Int.self, forKey: .idlePauseSeconds)) ?? d.idlePauseSeconds
         awayResetsTimerMinutes = (try? c.decode(Int.self, forKey: .awayResetsTimerMinutes)) ?? d.awayResetsTimerMinutes
         respectFullscreen = (try? c.decode(Bool.self, forKey: .respectFullscreen)) ?? d.respectFullscreen
+        calendarAwareEnabled = (try? c.decode(Bool.self, forKey: .calendarAwareEnabled)) ?? d.calendarAwareEnabled
+        calendarSkipAllDayEvents = (try? c.decode(Bool.self, forKey: .calendarSkipAllDayEvents)) ?? d.calendarSkipAllDayEvents
+        networkTrackingEnabled = (try? c.decode(Bool.self, forKey: .networkTrackingEnabled)) ?? d.networkTrackingEnabled
+        dailyDataLimitMB = (try? c.decode(Int.self, forKey: .dailyDataLimitMB)) ?? d.dailyDataLimitMB
+        showNetworkSpeedInMenuBar = (try? c.decode(Bool.self, forKey: .showNetworkSpeedInMenuBar)) ?? d.showNetworkSpeedInMenuBar
+        menuBarUsagePeriod = (try? c.decode(NetworkMenuBarPeriod.self, forKey: .menuBarUsagePeriod)) ?? d.menuBarUsagePeriod
+        showUploadDownloadSeparately = (try? c.decode(Bool.self, forKey: .showUploadDownloadSeparately)) ?? d.showUploadDownloadSeparately
+        perNetworkUsageEnabled = (try? c.decode(Bool.self, forKey: .perNetworkUsageEnabled)) ?? d.perNetworkUsageEnabled
         scheduleEnabled = (try? c.decode(Bool.self, forKey: .scheduleEnabled)) ?? d.scheduleEnabled
         workdays = (try? c.decode([Int].self, forKey: .workdays)) ?? d.workdays
         startMinuteOfDay = (try? c.decode(Int.self, forKey: .startMinuteOfDay)) ?? d.startMinuteOfDay
         endMinuteOfDay = (try? c.decode(Int.self, forKey: .endMinuteOfDay)) ?? d.endMinuteOfDay
         dailyBreakGoal = (try? c.decode(Int.self, forKey: .dailyBreakGoal)) ?? d.dailyBreakGoal
         waterGlassGoal = (try? c.decode(Int.self, forKey: .waterGlassGoal)) ?? d.waterGlassGoal
+        perKindGoal = (try? c.decode([String: Int].self, forKey: .perKindGoal)) ?? d.perKindGoal
         launchAtLogin = (try? c.decode(Bool.self, forKey: .launchAtLogin)) ?? d.launchAtLogin
         normalize()
     }
@@ -247,12 +326,21 @@ struct Settings: Codable, Equatable {
          idlePauseSeconds: Int,
          awayResetsTimerMinutes: Int,
          respectFullscreen: Bool,
+         calendarAwareEnabled: Bool,
+         calendarSkipAllDayEvents: Bool,
+         networkTrackingEnabled: Bool,
+         dailyDataLimitMB: Int,
+         showNetworkSpeedInMenuBar: Bool,
+         menuBarUsagePeriod: NetworkMenuBarPeriod,
+         showUploadDownloadSeparately: Bool,
+         perNetworkUsageEnabled: Bool,
          scheduleEnabled: Bool,
          workdays: [Int],
          startMinuteOfDay: Int,
          endMinuteOfDay: Int,
          dailyBreakGoal: Int,
          waterGlassGoal: Int,
+         perKindGoal: [String: Int],
          launchAtLogin: Bool) {
         self.reminders = reminders
         self.breakStyle = breakStyle
@@ -269,12 +357,21 @@ struct Settings: Codable, Equatable {
         self.idlePauseSeconds = idlePauseSeconds
         self.awayResetsTimerMinutes = awayResetsTimerMinutes
         self.respectFullscreen = respectFullscreen
+        self.calendarAwareEnabled = calendarAwareEnabled
+        self.calendarSkipAllDayEvents = calendarSkipAllDayEvents
+        self.networkTrackingEnabled = networkTrackingEnabled
+        self.dailyDataLimitMB = dailyDataLimitMB
+        self.showNetworkSpeedInMenuBar = showNetworkSpeedInMenuBar
+        self.menuBarUsagePeriod = menuBarUsagePeriod
+        self.showUploadDownloadSeparately = showUploadDownloadSeparately
+        self.perNetworkUsageEnabled = perNetworkUsageEnabled
         self.scheduleEnabled = scheduleEnabled
         self.workdays = workdays
         self.startMinuteOfDay = startMinuteOfDay
         self.endMinuteOfDay = endMinuteOfDay
         self.dailyBreakGoal = dailyBreakGoal
         self.waterGlassGoal = waterGlassGoal
+        self.perKindGoal = perKindGoal
         self.launchAtLogin = launchAtLogin
     }
 }
@@ -282,7 +379,7 @@ struct Settings: Codable, Equatable {
 // MARK: - Persistence
 
 enum SettingsStore {
-    private static let key = "takeabreak.settings.v1"
+    private static let key = "downtime.settings.v1"
 
     static func load() -> Settings {
         guard let data = UserDefaults.standard.data(forKey: key),

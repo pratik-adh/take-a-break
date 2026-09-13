@@ -82,17 +82,25 @@ final class StatusItemController: NSObject {
             symbolName = "bell.slash.fill"
         }
 
-        let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: "Take a Break")
-            ?? NSImage(systemSymbolName: "clock", accessibilityDescription: "Take a Break")
-        image?.isTemplate = true
-        image?.size = NSSize(width: 15, height: 15)
-        button.image = image
+        // A `SymbolConfiguration` re-renders the glyph at this size with its
+        // own correct metrics; forcing `.size` directly just scales whatever
+        // was rendered at the default size, which left the icon slightly
+        // off-center — most visible once a second status item sat next to it.
+        let config = NSImage.SymbolConfiguration(pointSize: 13, weight: .medium)
+        let icon = (NSImage(systemSymbolName: symbolName, accessibilityDescription: "Downtime")
+            ?? NSImage(systemSymbolName: "clock", accessibilityDescription: "Downtime"))?
+            .withSymbolConfiguration(config)
+        icon?.isTemplate = true
 
-        button.attributedTitle = NSAttributedString(
-            string: text.isEmpty ? "" : " " + text,
-            attributes: [.font: NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .regular)]
-        )
-        button.imagePosition = text.isEmpty ? .imageOnly : .imageLeading
+        button.image = nil
+        button.imagePosition = .noImage
+        if let icon {
+            button.attributedTitle = MenuBarComposer.attributedTitle(
+                icon: icon,
+                text: text,
+                font: NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .regular)
+            )
+        }
 
         button.toolTip = tooltip
         // If this changed the button's width, the window observers pick up
@@ -118,15 +126,20 @@ final class StatusItemController: NSObject {
     }
 
     private var tooltip: String {
+        var base: String
         if let session = model.activeBreak {
-            return "\(session.kind.title) — \(Format.clock(session.remaining)) left"
+            base = "\(session.kind.title) — \(Format.clock(session.remaining)) left"
+        } else if let reason = model.pauseReason {
+            base = "Downtime — \(reason.label)"
+        } else {
+            let lines = model.settings.reminders
+                .filter { $0.isEnabled }
+                .map { "\($0.kind.title): \(Format.duration(model.timeUntil($0.kind)))" }
+            base = lines.isEmpty
+                ? "Downtime — all reminders are off"
+                : (["Next up"] + lines).joined(separator: "\n")
         }
-        if let reason = model.pauseReason { return "Take a Break — \(reason.label)" }
-        let lines = model.settings.reminders
-            .filter { $0.isEnabled }
-            .map { "\($0.kind.title): \(Format.duration(model.timeUntil($0.kind)))" }
-        if lines.isEmpty { return "Take a Break — all reminders are off" }
-        return (["Next up"] + lines).joined(separator: "\n")
+        return base
     }
 
     // MARK: - Interaction
@@ -202,7 +215,7 @@ final class StatusItemController: NSObject {
 
         menu.addItem(.separator())
         menu.addItem(item("Settings…", #selector(openSettings), ","))
-        menu.addItem(item("Quit Take a Break", #selector(quit), "q"))
+        menu.addItem(item("Quit Downtime", #selector(quit), "q"))
 
         statusItem.menu = menu
         statusItem.button?.performClick(nil)

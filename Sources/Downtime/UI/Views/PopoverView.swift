@@ -24,15 +24,27 @@ struct PopoverView: View {
         }
     }
 
+    /// A deliberate pause, as opposed to a transient world-state hold (away,
+    /// fullscreen, a meeting, outside work hours) — those clear themselves
+    /// and the dashboard stays useful to glance at during them, but a real
+    /// pause has nothing fresh to show underneath it.
+    private var manuallyPaused: Bool {
+        model.isPausedIndefinitely || model.pausedUntil != nil
+    }
+
     var body: some View {
         VStack(spacing: 12) {
             header
             hero
-            reminderList
-            waterRow
-            actions
-            Divider().opacity(0.5)
-            statsSection
+            if manuallyPaused {
+                pausedNotice
+            } else {
+                reminderList
+                waterRow
+                actions
+                Divider().opacity(0.5)
+                statsSection
+            }
             footer
         }
         .padding(14)
@@ -43,6 +55,26 @@ struct PopoverView: View {
         .background(Tokens.popoverBackground)
     }
 
+    private var pausedNotice: some View {
+        VStack(spacing: 10) {
+            Text("Reminders are paused")
+                .font(.system(size: 13, weight: .semibold))
+            Text("Resume to see reminders, water tracking, and today's stats.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            Button {
+                model.resume()
+            } label: {
+                Label("Resume Break Mode", systemImage: "play.circle.fill")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(ReminderKind.stand.tint)
+        }
+        .padding(.vertical, 16)
+    }
+
     // MARK: Header
 
     private var header: some View {
@@ -50,7 +82,7 @@ struct PopoverView: View {
             Image(systemName: "cup.and.saucer.fill")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(ReminderKind.stand.tint)
-            Text("Take a Break")
+            Text("Downtime")
                 .font(.system(size: 14, weight: .semibold))
             Spacer()
 
@@ -245,15 +277,23 @@ struct PopoverView: View {
             // A plain toggle, not a copy of the header's duration menu: one tap
             // stops reminders until you press Resume. The timed choices ("for
             // 20 minutes", "until tomorrow") stay in the header menu.
-            Button {
-                if model.isRunning { model.pauseIndefinitely() } else { model.resume() }
-            } label: {
-                footerLabel(model.isRunning ? "Pause" : "Resume",
-                            symbol: model.isRunning ? "pause.circle" : "play.circle.fill")
+            //
+            // While manually paused, `pausedNotice` above already has its own
+            // prominent Resume Break Mode button — repeating the same action
+            // here too was just clutter, so this slot only appears otherwise
+            // (including during an away/fullscreen/schedule hold, where it's
+            // still the only way to lift one that can be lifted).
+            if !manuallyPaused {
+                Button {
+                    if model.isRunning { model.pauseIndefinitely() } else { model.resume() }
+                } label: {
+                    footerLabel(model.isRunning ? "Quit Break Mode" : "Resume Break Mode",
+                                symbol: model.isRunning ? "pause.circle" : "play.circle.fill")
+                }
+                .buttonStyle(.borderless)
+                .disabled(!model.isRunning && !model.canResume)
+                .help(model.isRunning ? "Quit break mode — stops reminders, leaves network tracking untouched" : "Resume Break Mode")
             }
-            .buttonStyle(.borderless)
-            .disabled(!model.isRunning && !model.canResume)
-            .help(model.isRunning ? "Pause reminders" : "Resume reminders")
 
             Button {
                 NSApp.terminate(nil)
@@ -261,7 +301,7 @@ struct PopoverView: View {
                 footerLabel("Quit", symbol: "power")
             }
             .buttonStyle(.borderless)
-            .help("Quit Take a Break")
+            .help("Quit Downtime")
         }
         .foregroundStyle(.secondary)
     }

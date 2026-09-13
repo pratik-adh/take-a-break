@@ -22,7 +22,7 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         let hosting = NSHostingController(rootView: SettingsView(model: model))
         hosting.sizingOptions = [.preferredContentSize]
         let newWindow = NSWindow(contentViewController: hosting)
-        newWindow.title = "Take a Break Settings"
+        newWindow.title = "Downtime Settings"
         newWindow.styleMask = [.titled, .closable, .miniaturizable]
         newWindow.isReleasedWhenClosed = false
         newWindow.delegate = self

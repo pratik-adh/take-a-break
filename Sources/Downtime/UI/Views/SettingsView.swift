@@ -1,9 +1,16 @@
 import SwiftUI
 import AppKit
+import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @ObservedObject var model: AppModel
     @State private var selection = 0
+
+    private func applyPendingTab() {
+        guard let tab = model.pendingSettingsTab else { return }
+        selection = tab
+        model.pendingSettingsTab = nil
+    }
 
     var body: some View {
         TabView(selection: $selection) {
@@ -22,10 +29,18 @@ struct SettingsView: View {
             StatsTab(model: model)
                 .tabItem { Label("Stats", systemImage: "chart.bar.fill") }
                 .tag(4)
+            NetworkTab(model: model)
+                .tabItem { Label("Network", systemImage: "network") }
+                .tag(5)
             SupportTab()
                 .tabItem { Label("Support", systemImage: "heart.fill") }
-                .tag(5)
+                .tag(6)
         }
+        // The Settings window is created once and reused (shown/hidden, never
+        // rebuilt), so `.onAppear` only ever fires the first time — this has
+        // to react to the value changing instead, on every subsequent open too.
+        .onAppear { applyPendingTab() }
+        .onChange(of: model.pendingSettingsTab) { _ in applyPendingTab() }
         .frame(width: 560, height: 520)
         // macOS draws the tab bar and the bezel *outside* the TabView's layout
         // bounds, so the TabView needs a margin to sit in. Flush against the
@@ -64,6 +79,38 @@ private func breakLabel(_ seconds: Int) -> String {
     if seconds < 60 { return "\(seconds) seconds" }
     let m = seconds / 60
     return m == 1 ? "1 minute" : "\(m) minutes"
+}
+
+private func perKindGoalBinding(_ model: AppModel, _ kind: ReminderKind) -> Binding<Int> {
+    Binding(
+        get: { model.settings.perKindGoal[kind.rawValue] ?? 5 },
+        set: { newValue in
+            var copy = model.settings
+            copy.perKindGoal[kind.rawValue] = newValue
+            model.settings = copy
+        }
+    )
+}
+
+private func exportSettings(_ model: AppModel) {
+    guard let data = try? JSONEncoder().encode(model.settings) else { return }
+    let panel = NSSavePanel()
+    panel.nameFieldStringValue = "Downtime-Settings.json"
+    panel.allowedContentTypes = [.json]
+    guard panel.runModal() == .OK, let url = panel.url else { return }
+    try? data.write(to: url, options: .atomic)
+}
+
+private func importSettings(_ model: AppModel) {
+    let panel = NSOpenPanel()
+    panel.allowedContentTypes = [.json]
+    panel.allowsMultipleSelection = false
+    panel.canChooseDirectories = false
+    guard panel.runModal() == .OK, let url = panel.url,
+          let data = try? Data(contentsOf: url),
+          let decoded = try? JSONDecoder().decode(Settings.self, from: data)
+    else { return }
+    model.settings = decoded
 }
 
 // MARK: - Reminders
@@ -183,6 +230,9 @@ private struct BreakScreenTab: View {
         var copy = model.settings
         copy.breakStyle = style
         model.settings = copy
+        if style == .notification {
+            NotificationManager.shared.requestAuthorizationIfNeeded()
+        }
     }
 
     var body: some View {
@@ -351,6 +401,30 @@ private struct ScheduleTab: View {
                     .foregroundStyle(.secondary)
             }
 
+            Section("Calendar") {
+                Toggle("Pause reminders during calendar meetings",
+                       isOn: settingsBinding(model, \.calendarAwareEnabled))
+                Toggle("Ignore all-day events",
+                       isOn: settingsBinding(model, \.calendarSkipAllDayEvents))
+                    .disabled(!model.settings.calendarAwareEnabled)
+
+                if model.settings.calendarAwareEnabled {
+                    if model.calendarAccessDenied {
+                        Text("Calendar access is off. Enable it in System Settings ▸ Privacy & Security ▸ Calendars, then turn this back on.")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    } else if model.isInMeeting {
+                        Text("Right now: in a meeting\(model.meetingTitle.map { " — \($0)" } ?? "") — reminders on hold.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("Reminders will hold automatically while an event on your calendar is happening.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+
             Section("Right now") {
                 HStack(spacing: 6) {
                     Image(systemName: model.pauseReason?.symbolName ?? "checkmark.circle.fill")
@@ -380,7 +454,7 @@ private struct GeneralTab: View {
     var body: some View {
         Form {
             Section("Startup") {
-                Toggle("Open Take a Break at login", isOn: settingsBinding(model, \.launchAtLogin))
+                Toggle("Open Downtime at login", isOn: settingsBinding(model, \.launchAtLogin))
                 if let problem = model.launchAtLoginProblem {
                     Text(problem)
                         .font(.caption)
@@ -394,6 +468,9 @@ private struct GeneralTab: View {
                 Toggle("Include seconds in the countdown",
                        isOn: settingsBinding(model, \.showSecondsInMenuBar))
                     .disabled(!model.settings.showCountdownInMenuBar)
+                Text("Network usage has its own icon and settings — see the Network tab.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             Section("Sound") {
@@ -425,13 +502,34 @@ private struct GeneralTab: View {
                 }
             }
 
+            Section("Per-reminder goals") {
+                ForEach(ReminderKind.allCases) { kind in
+                    Stepper(value: perKindGoalBinding(model, kind), in: 1...30) {
+                        Text("\(kind.title) per day: \(model.settings.perKindGoal[kind.rawValue] ?? 5)")
+                    }
+                }
+                Text("Each reminder keeps its own streak once you hit its goal for the day.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section("Backup") {
+                HStack {
+                    Button("Export Settings…") { exportSettings(model) }
+                    Button("Import Settings…") { importSettings(model) }
+                }
+                Text("Save your settings to a file, or load one on another Mac.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             Section("About") {
                 HStack(spacing: 10) {
                     Image(systemName: "cup.and.saucer.fill")
                         .font(.system(size: 18))
                         .foregroundStyle(ReminderKind.stand.tint)
                     VStack(alignment: .leading, spacing: 1) {
-                        Text("Take a Break 1.0").font(.system(size: 12, weight: .semibold))
+                        Text("Downtime 1.1").font(.system(size: 12, weight: .semibold))
                         Text("Break reminders for long days at the screen.")
                             .font(.caption).foregroundStyle(.secondary)
                     }
@@ -447,7 +545,267 @@ private struct GeneralTab: View {
     }
 }
 
+// MARK: - Network
+
+private struct NetworkTab: View {
+    @ObservedObject var model: AppModel
+
+    private func limitBinding() -> Binding<Int> {
+        Binding(
+            get: { model.settings.dailyDataLimitMB },
+            set: { newValue in
+                var copy = model.settings
+                copy.dailyDataLimitMB = newValue
+                model.settings = copy
+                if newValue > 0 {
+                    NotificationManager.shared.requestAuthorizationIfNeeded()
+                }
+            }
+        )
+    }
+
+    private func limitLabel(_ mb: Int) -> String {
+        mb == 0 ? "No budget" : Format.bytes(mb * 1_000_000)
+    }
+
+    private func perNetworkBinding() -> Binding<Bool> {
+        Binding(
+            get: { model.settings.perNetworkUsageEnabled },
+            set: { newValue in
+                var copy = model.settings
+                copy.perNetworkUsageEnabled = newValue
+                model.settings = copy
+            }
+        )
+    }
+
+    var body: some View {
+        Form {
+            // MARK: Controls — what to track, and how to show it
+
+            Section("Network tracking") {
+                if model.settings.networkTrackingEnabled {
+                    Text("Tracking is on. Its own icon in the menu bar shows this at a glance — right-click it to pause.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    HStack {
+                        Text("Network tracking is paused.")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                        Spacer()
+                        Button("Resume") { settingsBinding(model, \.networkTrackingEnabled).wrappedValue = true }
+                    }
+                }
+                Toggle("Track network usage", isOn: settingsBinding(model, \.networkTrackingEnabled))
+                Text("Reads the same interface counters Activity Monitor's network tab does — a break-reminder feature kept fully separate from reminders themselves. Everything stays on this Mac.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section("Menu bar") {
+                Toggle("Show a network icon in the menu bar",
+                       isOn: settingsBinding(model, \.showNetworkSpeedInMenuBar))
+                    .disabled(!model.settings.networkTrackingEnabled)
+                if model.settings.showNetworkSpeedInMenuBar && model.settings.networkTrackingEnabled {
+                    Picker("Show", selection: settingsBinding(model, \.menuBarUsagePeriod)) {
+                        ForEach(NetworkMenuBarPeriod.allCases) { period in
+                            Text(period.title).tag(period)
+                        }
+                    }
+                    let total = model.menuBarUsageTotal
+                    let preview = model.settings.showUploadDownloadSeparately
+                        ? "↓\(Format.bytes(total.received)) ↑\(Format.bytes(total.sent))"
+                        : Format.bytes(total.received + total.sent)
+                    Text("\(preview) — right now. Live up/down speed is one click away, in the popover.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                } else {
+                    Text("This is its own icon, separate from the break reminder icon.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Section("Display") {
+                Toggle("Show upload and download separately",
+                       isOn: settingsBinding(model, \.showUploadDownloadSeparately))
+                Text("Off combines both directions into one total in the figures below.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section("Daily data budget") {
+                Picker("Notify me after", selection: limitBinding()) {
+                    ForEach(Settings.dataLimitChoices, id: \.self) { mb in
+                        Text(limitLabel(mb)).tag(mb)
+                    }
+                }
+                .disabled(!model.settings.networkTrackingEnabled)
+                Text("This is a nudge, not a block — Downtime can't actually limit your internet without a much deeper (and riskier) system integration. Crossing the budget sends one notification for the day.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            // MARK: Usage — day, week, month, by network, then the grand total
+
+            Section("Today") {
+                let today = model.todayStat
+                if model.settings.showUploadDownloadSeparately {
+                    HStack {
+                        Text("Downloaded")
+                        Spacer()
+                        Text(Format.bytes(today.bytesReceived)).foregroundStyle(.secondary)
+                    }
+                    HStack {
+                        Text("Uploaded")
+                        Spacer()
+                        Text(Format.bytes(today.bytesSent)).foregroundStyle(.secondary)
+                    }
+                } else {
+                    HStack {
+                        Text("Total")
+                        Spacer()
+                        Text(Format.bytes(today.bytesReceived + today.bytesSent)).foregroundStyle(.secondary)
+                    }
+                }
+            }
+
+            Section("This week") {
+                let week = model.networkTotal(lastDays: 7)
+                if model.settings.showUploadDownloadSeparately {
+                    HStack {
+                        Text("Downloaded")
+                        Spacer()
+                        Text(Format.bytes(week.received)).foregroundStyle(.secondary)
+                    }
+                    HStack {
+                        Text("Uploaded")
+                        Spacer()
+                        Text(Format.bytes(week.sent)).foregroundStyle(.secondary)
+                    }
+                } else {
+                    HStack {
+                        Text("Last 7 days")
+                        Spacer()
+                        Text(Format.bytes(week.received + week.sent)).foregroundStyle(.secondary)
+                    }
+                }
+            }
+
+            Section("This month") {
+                let month = model.networkTotal(lastDays: 30)
+                if model.settings.showUploadDownloadSeparately {
+                    HStack {
+                        Text("Downloaded")
+                        Spacer()
+                        Text(Format.bytes(month.received)).foregroundStyle(.secondary)
+                    }
+                    HStack {
+                        Text("Uploaded")
+                        Spacer()
+                        Text(Format.bytes(month.sent)).foregroundStyle(.secondary)
+                    }
+                } else {
+                    HStack {
+                        Text("Last 30 days")
+                        Spacer()
+                        Text(Format.bytes(month.received + month.sent)).foregroundStyle(.secondary)
+                    }
+                }
+            }
+
+            Section("By Wi-Fi network") {
+                Toggle("Break down usage by Wi-Fi network", isOn: perNetworkBinding())
+                    .disabled(!model.settings.networkTrackingEnabled)
+                if model.settings.perNetworkUsageEnabled {
+                    if model.perNetworkLocationDenied {
+                        Text("Location access is off, so Wi-Fi names can't be read. Enable it in System Settings ▸ Privacy & Security ▸ Location Services, then turn this back on.")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    } else if model.perNetworkUsageTotals.isEmpty {
+                        Text("No network history yet — check back after using the connection for a bit.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        // Already sorted by usage, largest first.
+                        ForEach(model.perNetworkUsageTotals, id: \.name) { entry in
+                            let isCurrent = entry.name == model.currentNetworkLabel
+                            HStack(spacing: 6) {
+                                Image(systemName: entry.name == "Other network" ? "cable.connector" : "wifi")
+                                    .padding(.horizontal, entry.name == "Other network" ? 6 : 0)
+                                    .font(.caption2)
+                                    .foregroundStyle(isCurrent ? Color.green : Color.secondary)
+                                Text(entry.name)
+                                    .fontWeight(isCurrent ? .semibold : .regular)
+                                if isCurrent {
+                                    Text("now")
+                                        .font(.system(size: 9, weight: .bold))
+                                        .padding(.horizontal, 4)
+                                        .padding(.vertical, 1)
+                                        .background(Capsule().fill(Color.green.opacity(0.18)))
+                                        .foregroundStyle(Color.green)
+                                }
+                                Spacer()
+                                Text(Format.bytes(entry.received + entry.sent)).foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    Text("Reading the current Wi-Fi name needs Location Services — a macOS restriction on SSID access, not something this app can bypass. Wired connections and unreadable networks are grouped as \"Other network.\" Nothing is ever sent anywhere; the name only labels your own local history.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Section("All-time total") {
+                let total = model.allTimeNetworkTotal
+                if model.settings.showUploadDownloadSeparately {
+                    HStack {
+                        Text("Downloaded")
+                        Spacer()
+                        Text(Format.bytes(total.received)).foregroundStyle(.secondary)
+                    }
+                    HStack {
+                        Text("Uploaded")
+                        Spacer()
+                        Text(Format.bytes(total.sent)).foregroundStyle(.secondary)
+                    }
+                } else {
+                    HStack {
+                        Text("Total")
+                        Spacer()
+                        Text(Format.bytes(total.received + total.sent)).foregroundStyle(.secondary)
+                    }
+                }
+                Text("Across every day still in history (up to 120 days).")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .formStyle(.grouped)
+    }
+}
+
 // MARK: - Stats
+
+@ViewBuilder
+private func weekTrend(current: Int, previous: Int) -> some View {
+    let delta = current - previous
+    HStack(spacing: 4) {
+        Text("\(current)")
+        if delta != 0 {
+            Image(systemName: delta > 0 ? "arrow.up.right" : "arrow.down.right")
+                .font(.caption2)
+            Text("\(abs(delta)) \(delta > 0 ? "more" : "fewer") than last week")
+                .font(.caption2)
+        } else {
+            Text("same as last week")
+                .font(.caption2)
+        }
+    }
+    .foregroundStyle(.secondary)
+}
 
 private struct StatsTab: View {
     @ObservedObject var model: AppModel
@@ -507,6 +865,39 @@ private struct StatsTab: View {
                 }
             }
 
+            Section("This week vs. last week") {
+                let summary = model.weekSummary
+                HStack {
+                    Text("Breaks taken")
+                    Spacer()
+                    weekTrend(current: summary.breaksThisWeek, previous: summary.breaksLastWeek)
+                }
+                HStack {
+                    Text("Compliance")
+                    Spacer()
+                    Text("\(Int((summary.complianceThisWeek * 100).rounded()))%")
+                        .foregroundStyle(.secondary)
+                    Text("vs \(Int((summary.complianceLastWeek * 100).rounded()))% last week")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Section("Per-reminder streaks") {
+                ForEach(ReminderKind.allCases) { kind in
+                    HStack {
+                        Image(systemName: kind.symbolName)
+                            .foregroundStyle(kind.tint)
+                            .frame(width: 16)
+                        Text(kind.title)
+                        Spacer()
+                        let streak = model.perKindStreaks[kind] ?? 0
+                        Text(streak == 1 ? "1 day" : "\(streak) days")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+
             Section {
                 Button("Erase all history", role: .destructive) { confirmErase = true }
                     .confirmationDialog("Erase every day of break history?",
@@ -514,7 +905,7 @@ private struct StatsTab: View {
                         Button("Erase", role: .destructive) { model.eraseStats() }
                         Button("Cancel", role: .cancel) {}
                     }
-                Text("History lives in ~/Library/Application Support/TakeABreak/stats.json and never leaves your Mac.")
+                Text("History lives in ~/Library/Application Support/Downtime/stats.json and never leaves your Mac.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -526,8 +917,7 @@ private struct StatsTab: View {
 // MARK: - Support
 
 private struct SupportTab: View {
-    // TODO: replace with your real Buy Me a Coffee page before shipping.
-    private static let coffeeURL = URL(string: "https://www.buymeacoffee.com/take-a-break")!
+    private static let coffeeURL = URL(string: "https://www.buymeacoffee.com/take.a.break")!
 
     var body: some View {
         Form {
@@ -537,7 +927,7 @@ private struct SupportTab: View {
                         .font(.system(size: 22))
                         .foregroundStyle(ReminderKind.stand.tint)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Enjoying Take a Break?").font(.system(size: 13, weight: .semibold))
+                        Text("Enjoying Downtime?").font(.system(size: 13, weight: .semibold))
                         Text("It's free, and stays that way. If it's saved your eyes or your back, a coffee helps keep it going.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
