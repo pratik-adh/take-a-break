@@ -1,5 +1,7 @@
 # Downtime
 
+[![Build](https://github.com/pratik-adh/downtime/actions/workflows/build.yml/badge.svg)](https://github.com/pratik-adh/downtime/actions/workflows/build.yml)
+
 **A macOS app that's concerned about your health.**
 
 It sits in your menu bar and looks after the three things a long day at a
@@ -318,6 +320,13 @@ binary outside the `.app` won't work.
 
 Issues and pull requests are welcome. The codebase is deliberately small and
 dependency-free - please keep it that way.
+
+Every push and pull request builds on macOS via GitHub Actions
+(`.github/workflows/build.yml`) - a debug build, a universal release build,
+and a full app bundle assembly, so a broken build can't land on `main`.
+Pushing a `vX.Y.Z` tag triggers `.github/workflows/release.yml`, which builds
+the universal binary, zips it, and publishes it as a GitHub release
+automatically.
 
 If you find this useful, there's a **Buy me a coffee** link in
 Settings → Support.
