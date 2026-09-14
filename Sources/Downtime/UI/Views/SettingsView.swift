@@ -569,7 +569,7 @@ private struct GeneralTab: View {
                         .font(.system(size: 18))
                         .foregroundStyle(ReminderKind.stand.tint)
                     VStack(alignment: .leading, spacing: 1) {
-                        Text("Downtime 1.1").font(.system(size: 12, weight: .semibold))
+                        Text("Downtime 1.2").font(.system(size: 12, weight: .semibold))
                         Text("Break reminders for long days at the screen.")
                             .font(.caption).foregroundStyle(.secondary)
                     }

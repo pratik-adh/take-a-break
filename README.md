@@ -23,6 +23,22 @@ right-click: break now · pause · settings · quit
 
 ---
 
+## Screenshots
+
+| Break dashboard | Network dashboard |
+| --- | --- |
+| ![Break popover - countdown ring, reminder list, water tracker, today's stats](screenshots/break-popover.png) | ![Network popover - live up/down usage rings and speed test](screenshots/network-popover.png) |
+
+| Settings - Break | Settings - Network |
+| --- | --- |
+| ![Settings window, Break tab, with Reminders/Break Screen/Schedule/Stats sub-tabs](screenshots/settings-break-tab.png) | ![Settings window, Network tab, right after Break](screenshots/settings-network-tab.png) |
+
+Settings is four tabs instead of seven: **Break** (Reminders, Break Screen,
+Schedule and Stats live together behind a segmented picker), **Network**
+(right after Break), **General**, and **Support**.
+
+---
+
 ## What it's looking after
 
 A full day at a screen is a slow accumulation of small strains. This app is
@@ -75,7 +91,7 @@ Each runs on its own timer and can be turned off independently.
 Intervals: 20 / 30 / 45 min · 1 / 1.5 / 2 / 3 / 4 / 5 hours.
 Break lengths: 20 s / 30 s / 1 / 2 / 3 / 5 / 10 min.
 
-There's a one-click **Apply the 20-20-20 rule** button in Settings → Reminders:
+There's a one-click **Apply the 20-20-20 rule** button in Settings → Break → Reminders:
 every 20 minutes, look 20 feet away, for 20 seconds - the optometrist's version
 of the eye break.
 
@@ -212,7 +228,7 @@ your Mac.
 - Settings live in your user defaults under `com.downtime.mac`.
 - History (including network usage totals) lives in
   `~/Library/Application Support/Downtime/stats.json`.
-- Settings → Stats has an **Erase all history** button.
+- Settings → Break → Stats has an **Erase all history** button.
 
 **Permissions:**
 
@@ -221,7 +237,7 @@ your Mac.
 - Network usage tracking reads the same local interface byte counters Activity
   Monitor does (`sysctl`) - **no permission prompt, no data ever sent anywhere.**
 - Calendar-aware pausing asks for a system permission (Calendar access), and
-  only if you turn it on in Settings → Schedule. Events are only ever checked
+  only if you turn it on in Settings → Break → Schedule. Events are only ever checked
   locally to see if one is happening right now - never read in bulk, stored,
   or sent anywhere.
 - Breaking down network usage by Wi-Fi network (Settings → Network, off by
@@ -275,7 +291,7 @@ Sources/Downtime/
       PopoverView.swift         the break dashboard
       NetworkPopoverView.swift  the network dashboard - speed rings, speed test, Wi-Fi list
       BreakView.swift           the break card
-      SettingsView.swift        seven tabs
+      SettingsView.swift        four tabs (Break, Network, General, Support)
       Components.swift          rings, chips, bars, water dots
 ```
 
