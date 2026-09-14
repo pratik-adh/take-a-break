@@ -80,7 +80,7 @@ struct PopoverView: View {
             Image(systemName: "cup.and.saucer.fill")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(ReminderKind.stand.tint)
-            Text("Downtime")
+            Text("Downtime - Break")
                 .font(.system(size: 14, weight: .semibold))
             Spacer()
 

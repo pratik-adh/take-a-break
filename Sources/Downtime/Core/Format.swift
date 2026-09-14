@@ -73,7 +73,7 @@ enum Format {
         let formatter = ByteCountFormatter()
         formatter.countStyle = .file
         formatter.allowedUnits = [.useKB, .useMB, .useGB, .useTB]
-        return formatter.string(fromByteCount: Int64(max(0, count)))
+        return formatter.string(fromByteCount: Int64(max(0, count))).replacingOccurrences(of: " ", with: "")
     }
 
     /// "1.2M" / "340K" / "0B" - no space, for the network popover's ring.

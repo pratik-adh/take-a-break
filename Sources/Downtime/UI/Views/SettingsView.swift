@@ -14,27 +14,18 @@ struct SettingsView: View {
 
     var body: some View {
         TabView(selection: $selection) {
-            RemindersTab(model: model)
-                .tabItem { Label("Reminders", systemImage: "bell.fill") }
+            BreakTab(model: model)
+                .tabItem { Label("Break", systemImage: "cup.and.saucer.fill") }
                 .tag(0)
-            BreakScreenTab(model: model)
-                .tabItem { Label("Break Screen", systemImage: "rectangle.inset.filled") }
-                .tag(1)
-            ScheduleTab(model: model)
-                .tabItem { Label("Schedule", systemImage: "calendar") }
-                .tag(2)
-            GeneralTab(model: model)
-                .tabItem { Label("General", systemImage: "gearshape.fill") }
-                .tag(3)
-            StatsTab(model: model)
-                .tabItem { Label("Stats", systemImage: "chart.bar.fill") }
-                .tag(4)
             NetworkTab(model: model)
                 .tabItem { Label("Network", systemImage: "network") }
-                .tag(5)
+                .tag(1)
+            GeneralTab(model: model)
+                .tabItem { Label("General", systemImage: "gearshape.fill") }
+                .tag(2)
             SupportTab()
                 .tabItem { Label("Support", systemImage: "heart.fill") }
-                .tag(6)
+                .tag(3)
         }
         // The Settings window is created once and reused (shown/hidden, never
         // rebuilt), so `.onAppear` only ever fires the first time - this has
@@ -111,6 +102,43 @@ private func importSettings(_ model: AppModel) {
           let decoded = try? JSONDecoder().decode(Settings.self, from: data)
     else { return }
     model.settings = decoded
+}
+
+// MARK: - Break (Reminders, Break Screen, Schedule, Stats)
+
+private struct BreakTab: View {
+    @ObservedObject var model: AppModel
+    @State private var section: BreakSection = .reminders
+
+    private enum BreakSection: String, CaseIterable, Identifiable {
+        case reminders = "Reminders"
+        case breakScreen = "Break Screen"
+        case schedule = "Schedule"
+        case stats = "Stats"
+        var id: String { rawValue }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Picker("", selection: $section) {
+                ForEach(BreakSection.allCases) { s in
+                    Text(s.rawValue).tag(s)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .padding(.horizontal, 14)
+            .padding(.top, 14)
+            .padding(.bottom, 6)
+
+            switch section {
+            case .reminders: RemindersTab(model: model)
+            case .breakScreen: BreakScreenTab(model: model)
+            case .schedule: ScheduleTab(model: model)
+            case .stats: StatsTab(model: model)
+            }
+        }
+    }
 }
 
 // MARK: - Reminders
@@ -506,7 +534,7 @@ private struct GeneralTab: View {
                 Stepper(value: settingsBinding(model, \.waterGlassGoal), in: 1...16) {
                     Text("Glasses of water per day: \(model.settings.waterGlassGoal)")
                 }
-                Text("Each reminder also keeps its own streak against its own goal - set those in the Reminders tab, next to each reminder's timing.")
+                Text("Each reminder also keeps its own streak against its own goal - set those in Break ▸ Reminders, next to each reminder's timing.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -530,7 +558,7 @@ private struct GeneralTab: View {
                 } message: {
                     Text("Every reminder, schedule, and preference in this window goes back to its default. Export first if you might want today's setup back.")
                 }
-                Text("Your break history and stats aren't touched - erase those separately, in the Stats tab.")
+                Text("Your break history and stats aren't touched - erase those separately, in Break ▸ Stats.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
