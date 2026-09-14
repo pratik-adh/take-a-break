@@ -272,12 +272,13 @@ From the dashboard header menu or the right-click menu:
 - Pause **until tomorrow** (resumes 5 a.m.)
 - Pause **until I turn it back on**
 
-The footer's **Quit Break Mode** button is the simple version of the last one
+The footer's **Pause Break Mode** button is the simple version of the last one
 
-- named that deliberately, alongside the network icon's own "Quit Network
-  Mode," so it's clear each stops _that_ feature only. Neither menu offers to
-  quit the other one, and only this icon's menu has the true "Quit Downtime"
-  that ends the app entirely.
+- named "Pause," not "Quit," because it's fully reversible with one tap of
+  Resume, right alongside the network icon's own "Pause Network Mode" so it's
+  clear each stops _that_ feature only. Neither menu offers to pause the
+  other one, and only this icon's menu has the true "Quit Downtime" that ends
+  the app entirely - the one place that word is actually accurate.
 
 Pausing closes any break already on screen cleanly, so a reminder is never lost
 mid-break. A timed pause expires by itself.
@@ -357,15 +358,18 @@ the break icon are rendered the same way - the glyph composed as a single
 attributed string with the icon inlined and baseline-corrected against the
 text, rather than `NSButton`'s separate image+title layout - so the two sit
 visually aligned rather than looking like two different conventions.
-Right-click the icon for today's totals, **Quit Network Mode** (or **Resume
+Right-click the icon for today's totals, **Pause Network Mode** (or **Resume
 Network Mode**), and Settings.
 
-**Pausing is independent of the break reminders, and it's called "Quit
-Network Mode" on purpose.** Turning it off - from Settings, the icon's own
+**Pausing is independent of the break reminders, and it's deliberately called
+"Pause," never "Quit."** Turning it off - from Settings, the icon's own
 right-click menu, or the popover's footer - stops tracking; the break
-reminder icon and its own "Quit Break Mode" are completely unaffected, and
-vice versa. Neither menu offers to quit the _other_ feature, and only the
-break icon's menu has the true "Quit Downtime" that ends the app.
+reminder icon and its own "Pause Break Mode" are completely unaffected, and
+vice versa, and either one resumes with a single tap. Neither menu offers to
+pause the _other_ feature, and only the break icon's menu has the true "Quit
+Downtime" that actually ends the app - "Quit" never means anything less than
+that anywhere in the app, on purpose, so it can't be mistaken for a
+reversible pause.
 
 **The paused network icon shows a pause glyph rather than vanishing** - the
 same convention the break icon already uses - so it (and any popover open at
@@ -381,7 +385,7 @@ nothing to point at.
 
 Left-click opens a popover shaped like the break dashboard - header (icon,
 title, pause button, gear), a live hero, a speed test, a Wi-Fi usage list,
-and a footer (gear, Quit Network Mode). Right-click gives the same options
+and a footer (gear, Pause Network Mode). Right-click gives the same options
 as a plain menu.
 
 **The hero shows both a rate and a total, deliberately, and leads with the

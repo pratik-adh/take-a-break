@@ -285,12 +285,12 @@ struct PopoverView: View {
                 Button {
                     if model.isRunning { model.pauseIndefinitely() } else { model.resume() }
                 } label: {
-                    footerLabel(model.isRunning ? "Quit Break Mode" : "Resume Break Mode",
+                    footerLabel(model.isRunning ? "Pause Break Mode" : "Resume Break Mode",
                                 symbol: model.isRunning ? "pause.circle" : "play.circle.fill")
                 }
                 .buttonStyle(.borderless)
                 .disabled(!model.isRunning && !model.canResume)
-                .help(model.isRunning ? "Quit break mode - stops reminders, leaves network tracking untouched" : "Resume Break Mode")
+                .help(model.isRunning ? "Pause break mode - stops reminders until you resume; network tracking is untouched" : "Resume Break Mode")
             }
 
             Button {

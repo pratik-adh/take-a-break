@@ -151,12 +151,13 @@ download totals, an optional breakdown by Wi-Fi network (needs Location
 access - see [Privacy](#privacy)), and a daily data budget that sends one
 nudge notification when you cross it. Downtime can't actually block or
 throttle your connection (that needs a much deeper system integration), so
-this is a nudge, not an enforced limit. **"Quit Network Mode"** - from
+this is a nudge, not an enforced limit. **"Pause Network Mode"** - from
 Settings, the icon's own right-click menu, or the popover footer - stops
 tracking and makes its icon disappear entirely; the break reminder icon and
-its own separate "Quit Break Mode" are untouched either way. Quitting one
-feature never takes the other down with it, and only the break icon's menu
-has the real "Quit Downtime" that ends the app.
+its own separate "Pause Break Mode" are untouched either way, and either can
+be resumed just as easily. Pausing one feature never takes the other down
+with it. "Quit" is reserved for the one action that actually ends the app -
+that lives only in the break icon's menu, as "Quit Downtime".
 
 📖 **[Full feature reference → FEATURES.md](FEATURES.md)** - every setting,
 every default, and the exact behaviour behind each one.
