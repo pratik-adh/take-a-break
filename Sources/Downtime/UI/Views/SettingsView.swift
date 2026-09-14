@@ -185,6 +185,11 @@ private struct RemindersTab: View {
                     .frame(width: 120)
                 }
 
+                Stepper(value: perKindGoalBinding(model, kind), in: 1...30) {
+                    Text("Goal: \(model.settings.perKindGoal[kind.rawValue] ?? 5) per day")
+                        .font(.system(size: 12))
+                }
+
                 DisclosureGroup(
                     isExpanded: Binding(
                         get: { expanded == kind },
@@ -450,6 +455,7 @@ private struct ScheduleTab: View {
 
 private struct GeneralTab: View {
     @ObservedObject var model: AppModel
+    @State private var confirmRestoreDefaults = false
 
     var body: some View {
         Form {
@@ -500,25 +506,31 @@ private struct GeneralTab: View {
                 Stepper(value: settingsBinding(model, \.waterGlassGoal), in: 1...16) {
                     Text("Glasses of water per day: \(model.settings.waterGlassGoal)")
                 }
-            }
-
-            Section("Per-reminder goals") {
-                ForEach(ReminderKind.allCases) { kind in
-                    Stepper(value: perKindGoalBinding(model, kind), in: 1...30) {
-                        Text("\(kind.title) per day: \(model.settings.perKindGoal[kind.rawValue] ?? 5)")
-                    }
-                }
-                Text("Each reminder keeps its own streak once you hit its goal for the day.")
+                Text("Each reminder also keeps its own streak against its own goal - set those in the Reminders tab, next to each reminder's timing.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
-            Section("Backup") {
+            Section("Backup & reset") {
                 HStack {
                     Button("Export Settings…") { exportSettings(model) }
                     Button("Import Settings…") { importSettings(model) }
                 }
                 Text("Save your settings to a file, or load one on another Mac.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Button("Restore all defaults", role: .destructive) {
+                    confirmRestoreDefaults = true
+                }
+                .confirmationDialog("Restore all settings to their defaults?",
+                                    isPresented: $confirmRestoreDefaults) {
+                    Button("Restore Defaults", role: .destructive) { model.restoreDefaultSettings() }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("Every reminder, schedule, and preference in this window goes back to its default. Export first if you might want today's setup back.")
+                }
+                Text("Your break history and stats aren't touched - erase those separately, in the Stats tab.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -538,7 +550,6 @@ private struct GeneralTab: View {
                 Text("On the break screen: return accepts, S snoozes, esc dismisses.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Button("Restore all defaults") { model.restoreDefaultSettings() }
             }
         }
         .formStyle(.grouped)

@@ -318,10 +318,12 @@ breaks taken** and **network bytes up/down**.
   default 8). Today only counts once you've _hit_ the goal, so the streak
   doesn't read as broken every morning before you've earned it.
 - **Per-reminder streaks** - Stand & Stretch, Drink Water and Rest Your Eyes
-  each keep their own streak against their own daily goal (Settings → General
-  → _Per-reminder goals_, 1–30 each, defaults 5 / 6 / 8). A day away from your
-  desk long enough to be credited as a break counts toward every enabled
-  reminder's streak, same as it does for the overall one.
+  each keep their own streak against their own daily goal (a **Goal** stepper
+  on each reminder's own card in Settings → Reminders, 1–30 each, defaults
+  5 / 6 / 8 - set right alongside that reminder's interval and break length,
+  not off in another tab). A day away from your desk long enough to be
+  credited as a break counts toward every enabled reminder's streak, same as
+  it does for the overall one.
 - **This week vs. last week** - Settings → Stats shows breaks taken and
   compliance for the last 7 days against the 7 before that, so a good or bad
   week has something to compare against besides a flat number.
@@ -583,8 +585,9 @@ Seven tabs.
 
 ### Reminders
 
-Per reminder: on/off, interval, break length, custom headline, custom message.
-Plus the 20-20-20 preset button.
+Per reminder: on/off, interval, break length, **daily goal** (1-30, backs its
+own streak), custom headline, custom message. Plus the 20-20-20 preset
+button.
 
 ### Break Screen
 
@@ -603,8 +606,9 @@ all-day events, access status** · current idle seconds · Resume now.
 
 Open at login · Show the countdown in the menu bar · Include seconds ·
 Reminder sound, volume, Test · Chime when a break finishes · Breaks per day
-goal · Glasses per day goal · **per-reminder daily goals** ·
-**Export/Import Settings** · About · Restore all defaults.
+goal · Glasses per day goal (per-reminder goals live on the Reminders tab
+instead) · **Export/Import Settings** · **Restore all defaults, with a
+confirmation** (settings only - your break history is untouched) · About.
 
 ### Stats
 
